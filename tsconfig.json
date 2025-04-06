@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/@types/json-schema/index.d.ts",
+  "compilerOptions": {
+    "strict": true,
+    "module": "commonjs",
+    "declaration": false,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2023",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    },
+    "incremental": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "strictBindCallApply": false,
+    "noFallthroughCasesInSwitch": false,
+    "esModuleInterop": true
+  },
+  "exclude": [
+    "src/system/interceptors/dict-data.interceptor.ts"
+  ]
+}

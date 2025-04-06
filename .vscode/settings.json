@@ -1,0 +1,20 @@
+{
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.reportStyleChecksAsWarnings": false,
+    "typescript.validate.enable": true,
+    "typescript.preferences.quoteStyle": "single",
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+    },
+    "javascript.validate.enable": true,
+    "eslint.validate": [
+        "typescript",
+        "javascript"
+    ],
+    "eslint.workingDirectories": [
+        {
+            "mode": "auto"
+        }
+    ],
+    "typescript.tsserver.experimental.enableProjectDiagnostics": false
+}

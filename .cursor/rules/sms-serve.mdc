@@ -1,0 +1,93 @@
+---
+description: NestJS项目sms-serve的开发规则，涵盖框架、代码风格、安全、数据处理、API文档、测试、日志及模块设计。
+globs: ["src/**/*.ts"] # 应用于所有TypeScript文件
+alwaysApply: true
+---
+# sms-serve 项目开发规则
+
+### ​**1. 框架规范 (NestJS)**
+- **模块化**: 遵循NestJS模块化设计，功能模块独立（如 `user`, `payment`, `template`, `notification`, `status`）。每个模块应包含 Controller, Service, Module 定义，必要时包含 DTO 和 Entity。
+- **配置管理**: 使用 `@nestjs/config` 统一管理环境变量（`.env` 文件），严禁在代码中硬编码敏感信息（如API密钥、数据库密码）。
+- **依赖注入**: 充分利用 NestJS 的 DI 容器，通过构造函数注入依赖。
+- **生命周期**: 了解并合理使用模块和服务的生命周期钩子（如 `OnModuleInit`, `OnApplicationBootstrap`）。
+
+### ​**2. 代码风格与质量**
+- **命名**:
+    - 目录/文件名: 优先单数形式，kebab-case（如 `user`, `payment.service.ts`）。
+    - 类名: PascalCase（`UserService`, `CreateUserDto`）。
+    - 变量/函数名: camelCase（`userService`, `isPaymentCompleted`），需语义清晰。
+    - 常量: UPPER_SNAKE_CASE（`MAX_LOGIN_ATTEMPTS`）。
+- **类型**: **强制类型检查**。所有 DTO、接口、函数参数和返回值必须定义明确的 TypeScript 类型。优先使用 Interface 定义对象结构，使用 Class 定义 DTO。
+- **错误处理**:
+    - 所有可能失败的异步操作（如数据库交互、API调用）必须包含 `try/catch` 块或使用 `.catch()` 处理 Promise rejection。
+    - 使用 NestJS 内建的 `HttpException` 或其子类（如 `NotFoundException`, `BadRequestException`）抛出标准的 HTTP 错误响应。定义统一的错误响应格式。
+- **注释**: 对复杂逻辑、非直观代码、公共API接口添加必要的 JSDoc 注释。
+- **Linter/Formatter**: 集成并强制使用 ESLint 和 Prettier，遵循预设规则（如 `@typescript-eslint/recommended`, `prettier/recommended`）。
+
+### ​**3. 安全要求**
+- **认证**:
+    - 用户登录/注册流程必须使用 `@nestjs/passport` 结合 `passport-local` 和 `passport-jwt` 策略。
+    - JWT Token 应包含必要的非敏感用户信息（如 `userId`, `role`），设置合理的过期时间，并使用环境变量存储 `JWT_SECRET`。
+- **密码**: 用户密码**必须**使用 `bcrypt` 进行哈希加密存储，提供合理的 `saltRounds`。
+- **授权**:
+    - 使用 NestJS Guards 实现访问控制。
+    - 结合 `@nestjs/common` 的 `@SetMetadata` (或自定义装饰器如 `@Roles`) 和 `Reflector` 实现基于角色（RBAC）或权限的访问控制。
+- **输入验证**: 所有来自客户端的输入（Request Body, Query Params, Route Params）**必须**通过 DTO 和 `class-validator`/`class-transformer` 进行严格验证和转换。启用 `ValidationPipe` 全局管道。
+- **安全头**: 使用 `helmet` 中间件添加基础的安全 HTTP 头。
+- **速率限制**: 对敏感接口（如登录、注册、发送验证码）实施速率限制（使用 `nestjs-rate-limiter` 或类似库）。
+
+### ​**4. 数据处理与持久化**
+- **ORM**: （*请根据你的选择替换，例如 TypeORM 或 Prisma*）
+    - **TypeORM 示例**:
+        - 使用 Data Mapper 模式（Entity, Repository）。
+        - Entity 定义需与数据库表结构对应，使用装饰器定义列、关系等。
+        - Repository 负责数据库交互逻辑，优先使用自定义 Repository。
+        - 避免在 Service 中直接写入复杂 SQL，封装到 Repository 方法中。
+    - **Prisma 示例**:
+        - 使用 `schema.prisma` 定义数据模型、关系和枚举。
+        - 通过 Prisma Client (`@prisma/client`) 进行数据库操作。
+        - 利用 Prisma Migrate 管理数据库结构变更。
+- **事务**: 对涉及多个写操作的业务逻辑，应使用数据库事务确保原子性。
+- **敏感数据**: 避免在日志或响应中直接暴露过多敏感数据。
+
+### ​**5. DTO 与数据验证**
+- **用途**: DTO (Data Transfer Object) 用于定义 API 的请求体、响应体和参数结构。
+- **位置**: DTO 文件通常放在对应模块的 `dto` 子目录下（如 `src/user/dto/create-user.dto.ts`）。
+- **验证**: **必须**使用 `class-validator` 装饰器为 DTO 的每个属性添加验证规则（如 `@IsString()`, `@IsEmail()`, `@IsNotEmpty()`, `@MinLength()` 等）。
+- **转换**: 使用 `class-transformer` 装饰器进行类型转换（如 `@Type(() => Number)`）和控制数据暴露（`@Exclude()`, `@Expose()`）。
+- **全局管道**: 在 `main.ts` 中全局注册 `ValidationPipe`，并配置 `whitelist: true` 和 `forbidNonWhitelisted: true` 以增强安全性。
+
+### ​**6. API 设计与文档**
+- **RESTful**: 遵循 RESTful API 设计原则，使用标准的 HTTP 方法（GET, POST, PUT, PATCH, DELETE）和状态码。
+- **版本控制**: 如果需要，考虑 API 版本控制（如 `/v1/users`）。
+- **文档生成**: **推荐**使用 `@nestjs/swagger` 自动生成 OpenAPI (Swagger) 文档。
+    - 为 Controller、API 方法、DTO 添加必要的 `@ApiTags`, `@ApiOperation`, `@ApiResponse`, `@ApiProperty` 等装饰器。
+    - 确保 Swagger 文档清晰、准确地反映 API 的使用方式。
+
+### ​**7. 测试**
+- **框架**: 使用 Jest 作为主要的测试框架。
+- **策略**:
+    - **单元测试**: 测试独立的服务方法、工具函数等，使用 Mock 隔离依赖。
+    - **集成测试**: 测试模块内部或跨模块的交互，可以连接到测试数据库。
+    - **端到端 (E2E) 测试**: 使用 `supertest` 测试完整的 HTTP 请求/响应流程。
+- **覆盖率**: （可选）设定目标代码覆盖率，并使用 Jest 的覆盖率报告进行跟踪。
+- **测试环境**: 配置独立的测试数据库和环境变量。
+
+### ​**8. 日志记录**
+- **实现**: 使用 `@nestjs/common` 提供的 `Logger` 服务或集成更强大的日志库（如 `pino`, `winston`）。
+- **级别**: 合理使用不同的日志级别（`log`, `error`, `warn`, `debug`, `verbose`）。生产环境建议设置 `log` 或 `warn` 级别。
+- **内容**: 日志应包含时间戳、上下文（如请求ID、类名/方法名）、日志级别和描述性消息。避免记录敏感信息。
+- **格式**: 定义统一的日志输出格式（如 JSON），便于收集和分析。
+
+### ​**9. 模块职责与设计 (项目特定)**
+- **`UserModule`**: 处理用户注册、登录、信息管理、认证与授权逻辑。
+- **`PaymentModule`**: 处理账号充值逻辑，与支付网关集成，记录交易状态。
+- **`TemplateModule`**: 管理邮件和短信模板的创建、读取、更新、删除 (CRUD)。可能需要支持变量替换。
+- **`NotificationModule`**: 负责发送邮件和短信。与 `TemplateModule` 交互获取模板内容，与第三方邮件/短信服务商集成。
+- **`StatusModule`**: 提供任务或流程（如充值处理、通知发送）的进度查询接口。根据实时性要求，考虑使用轮询、WebSockets 或 Server-Sent Events (SSE)。
+
+### ​**10. 第三方服务集成**
+- **封装**: 将与第三方服务（支付、邮件、短信）的交互逻辑封装在独立的 Service 或 Module 中。
+- **配置**: 通过 `@nestjs/config` 管理第三方服务的 API Key、URL 等配置。
+- **错误处理**: 对第三方 API 调用进行健壮的错误处理和重试逻辑（如果适用）。
+- **Mocking**: 在测试中方便地 Mock 第三方服务依赖。
