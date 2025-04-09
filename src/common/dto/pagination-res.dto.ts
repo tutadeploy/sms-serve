@@ -8,15 +8,15 @@ export class PaginationResDto<T> {
   total!: number;
 
   @ApiProperty({ description: '当前页码', example: 1 })
-  page!: number;
+  pageNo!: number;
 
   @ApiProperty({ description: '每页数量', example: 10 })
   pageSize!: number;
 
-  constructor(list: T[], total: number, page: number, pageSize: number) {
+  constructor(list: T[], total: number, pageNo: number, pageSize: number) {
     this.list = list;
     this.total = total;
-    this.page = page;
+    this.pageNo = pageNo;
     this.pageSize = pageSize;
   }
 }

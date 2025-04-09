@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { UserDto } from '../../user/dto/user.dto';
 
 /**
  * 邮件模板响应DTO
@@ -17,10 +18,11 @@ export class EmailTemplateResponseDto {
   userId!: number;
 
   @ApiProperty({
-    description: '账户ID',
-    example: 100,
+    description: '租户ID',
+    example: 1,
+    nullable: true,
   })
-  accountId!: number;
+  tenantId!: number | null;
 
   @ApiProperty({
     description: '模板名称',
@@ -43,32 +45,41 @@ export class EmailTemplateResponseDto {
   @ApiProperty({
     description: 'HTML格式的邮件内容',
     example: '<p>尊敬的 {{name}}，感谢您注册我们的服务！</p>',
+    nullable: true,
   })
-  bodyHtml!: string;
+  bodyHtml!: string | null;
 
   @ApiProperty({
     description: '纯文本格式的邮件内容',
     example: '尊敬的 {{name}}，感谢您注册我们的服务！',
-    required: false,
+    nullable: true,
   })
-  bodyText?: string;
+  bodyText!: string | null;
 
   @ApiProperty({
-    description: '模板状态 (1: 启用, 0: 禁用)',
-    example: 1,
-    enum: [0, 1],
+    description: '变量列表',
+    example: ['name', 'link'],
+    type: [String],
+    nullable: true,
   })
-  status!: number;
+  variables!: string[] | null;
 
   @ApiProperty({
     description: '创建时间',
     example: '2023-08-01T12:30:00Z',
   })
-  createdAt!: Date;
+  createTime!: Date;
 
   @ApiProperty({
     description: '更新时间',
     example: '2023-08-01T12:36:00Z',
   })
-  updatedAt!: Date;
+  updateTime!: Date;
+
+  @ApiProperty({
+    description: '创建者信息',
+    type: () => UserDto,
+    nullable: true,
+  })
+  user?: UserDto;
 }

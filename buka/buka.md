@@ -31,7 +31,7 @@
 
 ### 2.1 发送单条或多条相同内容短信
 
-- **API Endpoint:** `POST /v3/sendSms`
+- **API Endpoint:** `POST v3/sendSms`
 - **说明:** 支持向单个或多个号码发送相同内容的短信。GET方式一次最多提交100个号码，POST方式一次最多提交1000个号码。
 - **请求参数 (JSON Body):**
 

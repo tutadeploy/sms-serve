@@ -28,7 +28,7 @@ export class SmsResponseDto {
     description: '批次创建时间',
     example: '2023-05-12T08:00:00Z',
   })
-  createdAt!: Date;
+  createTime!: Date;
 
   constructor(partial?: Partial<SmsResponseDto>) {
     if (partial) {

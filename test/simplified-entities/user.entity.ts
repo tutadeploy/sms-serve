@@ -51,11 +51,11 @@ export class User {
   })
   isActive!: boolean;
 
-  @CreateDateColumn({ name: 'created_at', type: 'datetime' })
-  createdAt!: Date;
+  @CreateDateColumn({ name: 'createTime', type: 'datetime' })
+  createTime!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'datetime' })
-  updatedAt!: Date;
+  @UpdateDateColumn({ name: 'updateTime', type: 'datetime' })
+  updateTime!: Date;
 
   // 临时密码字段，不存储到数据库
   @MinLength(6, { message: '密码长度至少为6位' })

@@ -6,6 +6,10 @@ import {
   Req,
   Logger,
   UnauthorizedException,
+  Get,
+  Query,
+  Param,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { NotificationService } from './notification.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -18,6 +22,9 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
+import { QuerySmsBatchDto } from './dto/query-sms-batch.dto';
+import { SmsBatchItemDto } from './dto/sms-batch-list.dto';
+import { SmsBatchDetailDto } from './dto/sms-batch-detail.dto';
 
 @ApiTags('notification')
 @ApiBearerAuth()
@@ -93,5 +100,74 @@ export class NotificationController {
     }
     this.logger.log(`User ${userId} initiating Email send request.`);
     return this.notificationService.sendEmail(userId, sendEmailDto);
+  }
+
+  @Get('sms/batches')
+  @ApiOperation({
+    summary: '获取短信批次列表',
+    description:
+      '获取当前用户的短信发送批次列表，支持分页、状态筛选和时间范围筛选',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '短信批次列表',
+    schema: {
+      type: 'object',
+      properties: {
+        list: {
+          type: 'array',
+          items: { $ref: '#/components/schemas/SmsBatchItemDto' },
+        },
+        total: { type: 'number' },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: '未授权' })
+  async getSmsBatches(
+    @Query() queryDto: QuerySmsBatchDto,
+    @Req() req: RequestWithUser,
+  ): Promise<{ list: SmsBatchItemDto[]; total: number }> {
+    const userId = req.user.userId;
+    return this.notificationService.getSmsBatchList(userId, queryDto);
+  }
+
+  @Get('sms/batches/:id')
+  @ApiOperation({
+    summary: '获取短信批次详情',
+    description: '获取指定批次ID的详细信息，包括批次状态和消息列表',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '短信批次详情',
+    type: SmsBatchDetailDto,
+  })
+  @ApiResponse({ status: 401, description: '未授权' })
+  @ApiResponse({ status: 404, description: '批次不存在' })
+  async getSmsBatchDetail(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: RequestWithUser,
+  ): Promise<SmsBatchDetailDto> {
+    const userId = req.user.userId;
+    return this.notificationService.getSmsBatchDetail(userId, id);
+  }
+
+  @Post('sms/batches/:id/refresh')
+  @ApiOperation({
+    summary: '刷新短信批次状态',
+    description: '从服务提供商获取最新的短信状态信息并更新批次状态',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '短信批次详情',
+    type: SmsBatchDetailDto,
+  })
+  @ApiResponse({ status: 401, description: '未授权' })
+  @ApiResponse({ status: 404, description: '批次不存在' })
+  async refreshBatchStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: RequestWithUser,
+  ): Promise<SmsBatchDetailDto> {
+    const userId = req.user.userId;
+    return this.notificationService.refreshBatchStatus(userId, id);
   }
 }

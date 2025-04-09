@@ -46,14 +46,14 @@ export class Account {
   balance!: number; // TypeORM 通常将 decimal 映射为 number 或 string，这里用 number
 
   @CreateDateColumn({
-    name: 'created_at',
+    name: 'createTime',
     type: 'datetime',
   })
-  createdAt!: Date;
+  createTime!: Date;
 
   @UpdateDateColumn({
-    name: 'updated_at',
+    name: 'updateTime',
     type: 'datetime',
   })
-  updatedAt!: Date;
+  updateTime!: Date;
 }

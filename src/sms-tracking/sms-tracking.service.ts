@@ -71,7 +71,7 @@ export class SmsTrackingService {
   ): Promise<void> {
     await this.smsMessageRepository.update(id, {
       ...updateData,
-      statusUpdatedAt: new Date(),
+      statusUpdateTime: new Date(),
     });
   }
 
@@ -110,7 +110,7 @@ export class SmsTrackingService {
         {
           status: 'failed' as SmsStatus,
           errorMessage: errorMessage,
-          statusUpdatedAt: new Date(),
+          statusUpdateTime: new Date(),
         },
       );
 

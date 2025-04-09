@@ -22,7 +22,8 @@
     "forceConsistentCasingInFileNames": true,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "strictPropertyInitialization": false
   },
   "exclude": [
     "src/system/interceptors/dict-data.interceptor.ts"

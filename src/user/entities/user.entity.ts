@@ -9,11 +9,14 @@ import {
   OneToMany,
   ManyToOne,
   JoinColumn,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import { IsEmail, IsEnum, IsNotEmpty, MinLength } from 'class-validator';
 import * as bcrypt from 'bcrypt';
 import { Account } from '../../account/entities/account.entity';
 import { Tenant } from '../../tenant/entities/tenant.entity';
+import { Role } from '../../auth/entities/role.entity';
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -38,10 +41,9 @@ export class User {
   }) // select: false prevents password hash from being selected by default
   passwordHash!: string;
 
-  @Column({ type: 'varchar', length: 255, unique: true, nullable: false })
+  @Column({ type: 'varchar', length: 255, unique: true, nullable: true })
   @IsEmail({}, { message: '请输入有效的邮箱地址' })
-  @IsNotEmpty({ message: '邮箱不能为空' })
-  email!: string;
+  email?: string;
 
   @Column({
     type: 'varchar',
@@ -50,10 +52,29 @@ export class User {
   @IsEnum(UserRole)
   role!: UserRole;
 
-  // 虚拟属性，不存储在数据库中，用于JWT令牌
-  get roles(): string[] {
-    return [this.role];
-  }
+  @Column({ name: 'nickname', type: 'varchar', length: 100, nullable: true })
+  nickname?: string;
+
+  @Column({ name: 'mobile', type: 'varchar', length: 20, nullable: true })
+  mobile?: string;
+
+  @Column({ name: 'sex', type: 'tinyint', default: 0 })
+  sex?: number;
+
+  @Column({ name: 'avatar', type: 'varchar', length: 255, nullable: true })
+  avatar?: string;
+
+  @Column({ name: 'status', type: 'tinyint', default: 1 })
+  status?: number;
+
+  @Column({ name: 'remark', type: 'varchar', length: 500, nullable: true })
+  remark?: string;
+
+  @Column({ name: 'login_ip', type: 'varchar', length: 50, nullable: true })
+  loginIp?: string;
+
+  @Column({ name: 'login_date', type: 'datetime', nullable: true })
+  loginDate?: Date;
 
   @Column({
     name: 'is_active',
@@ -70,15 +91,38 @@ export class User {
   @JoinColumn({ name: 'tenant_id' })
   tenant: Tenant | null = null;
 
-  @CreateDateColumn({ name: 'created_at', type: 'datetime' })
-  createdAt!: Date;
+  @CreateDateColumn({ name: 'createTime', type: 'datetime' })
+  createTime!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'datetime' })
-  updatedAt!: Date;
+  @UpdateDateColumn({ name: 'updateTime', type: 'datetime' })
+  updateTime!: Date;
+
+  @Column({
+    name: 'package_form_code',
+    type: 'varchar',
+    length: 8,
+    nullable: true,
+    unique: true,
+  })
+  packageFormCode?: string;
 
   // --- Relations ---
   @OneToMany(() => Account, (account) => account.user)
   accounts!: Account[];
+
+  @ManyToMany(() => Role)
+  @JoinTable({
+    name: 'user_roles',
+    joinColumn: {
+      name: 'user_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'role_id',
+      referencedColumnName: 'id',
+    },
+  })
+  roles?: Role[];
 
   // --- Password Handling ---
 

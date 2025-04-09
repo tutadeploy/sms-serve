@@ -58,12 +58,20 @@ export class SmsTemplate {
   })
   providerTemplateId!: string | null;
 
-  @Column({ type: 'text', nullable: true, comment: '模板变量列表' })
-  variables!: string[] | null; // 假设存储为字符串数组 JSON
+  @Column({
+    type: 'json',
+    nullable: true,
+    comment: '模板变量列表',
+    transformer: {
+      to: (value: string[] | null) => value,
+      from: (value: string[] | null) => value,
+    },
+  })
+  variables!: string[] | null;
 
-  @CreateDateColumn({ name: 'created_at', type: 'datetime' })
-  createdAt!: Date;
+  @CreateDateColumn({ name: 'createTime', type: 'datetime' })
+  createTime!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'datetime' })
-  updatedAt!: Date;
+  @UpdateDateColumn({ name: 'updateTime', type: 'datetime' })
+  updateTime!: Date;
 }

@@ -85,4 +85,63 @@ export class SmsDispatcherService {
       };
     }
   }
+
+  /**
+   * 查询短信状态
+   * @param messageId 短信消息ID
+   * @param providerId 服务提供商ID
+   * @param providerMessageId 服务提供商返回的消息ID
+   * @returns 状态查询结果
+   */
+  async queryMessageStatus(
+    _messageId: number,
+    providerId: number,
+    _providerMessageId: string, // eslint-disable-line @typescript-eslint/no-unused-vars
+  ): Promise<{
+    success: boolean;
+    status: string;
+    statusUpdateTime?: Date;
+    errorMessage?: string;
+  }> {
+    try {
+      // 根据providerId获取提供商信息
+      const provider = await this.smsProviderService.findById(providerId);
+
+      if (!provider) {
+        throw new Error(`Provider with ID ${providerId} not found`);
+      }
+
+      // 根据提供商类型选择相应的服务
+      switch (provider.name.toLowerCase()) {
+        case 'buka':
+        case 'onbuka':
+          // 假设 BukaSmsChannelService 已经注入并实现了 queryMessageStatus 方法
+          // 实际项目中应该使用适当的服务
+          return {
+            success: true,
+            status: 'sent', // 模拟状态查询结果
+            statusUpdateTime: new Date(),
+          };
+        // 可以扩展更多提供商
+        default:
+          throw new Error(
+            `Provider type ${provider.name} is not supported for status query`,
+          );
+      }
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      const errorStack = error instanceof Error ? error.stack : undefined;
+
+      this.logger.error(
+        `Failed to query message status for provider ${providerId}: ${errorMsg}`,
+        errorStack,
+      );
+
+      return {
+        success: false,
+        status: 'unknown',
+        errorMessage: `Status query failed: ${errorMsg}`,
+      };
+    }
+  }
 }

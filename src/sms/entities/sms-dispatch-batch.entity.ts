@@ -79,11 +79,11 @@ export class SmsDispatchBatch {
   @Column({ name: 'completed_at', type: 'datetime', nullable: true })
   completedAt?: Date;
 
-  @CreateDateColumn({ name: 'created_at', type: 'datetime' })
-  createdAt!: Date;
+  @CreateDateColumn({ name: 'createTime', type: 'datetime' })
+  createTime!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'datetime' })
-  updatedAt!: Date;
+  @UpdateDateColumn({ name: 'updateTime', type: 'datetime' })
+  updateTime!: Date;
 
   // --- 关系 ---
   @OneToMany(() => SmsMessage, (message) => message.dispatchBatch)

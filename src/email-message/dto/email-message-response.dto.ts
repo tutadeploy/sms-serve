@@ -66,13 +66,13 @@ export class EmailMessageResponseDto {
     required: false,
     nullable: true,
   })
-  sentAt?: Date;
+  sendTime?: Date;
 
   @ApiProperty({
     description: '状态更新时间',
     example: '2023-08-01T12:35:00Z',
   })
-  statusUpdatedAt!: Date;
+  statusUpdateTime!: Date;
 }
 
 /**
@@ -126,13 +126,13 @@ export class EmailBatchResponseDto {
     description: '创建时间',
     example: '2023-08-01T12:30:00Z',
   })
-  createdAt!: Date;
+  createTime!: Date;
 
   @ApiProperty({
     description: '更新时间',
     example: '2023-08-01T12:36:00Z',
   })
-  updatedAt!: Date;
+  updateTime!: Date;
 
   @ApiProperty({
     description: '计划发送时间（如果是定时发送）',
@@ -191,5 +191,5 @@ export class SendEmailResponseDto {
     description: '创建时间',
     example: '2023-08-01T12:30:00Z',
   })
-  createdAt!: Date;
+  createTime!: Date;
 }

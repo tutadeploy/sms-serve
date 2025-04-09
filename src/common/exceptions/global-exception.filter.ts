@@ -5,9 +5,15 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { BusinessException } from './business.exception';
+import {
+  JsonWebTokenError,
+  TokenExpiredError,
+  NotBeforeError,
+} from 'jsonwebtoken';
 
 interface ErrorResponse {
   statusCode: number;
@@ -27,7 +33,7 @@ interface ErrorResponse {
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(GlobalExceptionFilter.name);
 
-  catch(exception: unknown, host: ArgumentsHost): void {
+  catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
@@ -39,6 +45,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let message = '服务器内部错误';
     let code: number | undefined = undefined;
     let details: Record<string, unknown> | undefined = undefined;
+    let isJwtError = false;
 
     // 处理业务异常
     if (exception instanceof BusinessException) {
@@ -47,12 +54,37 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       code = exception.getErrorCode();
       this.logger.warn(`业务异常 [${code}]: ${message} - ${path} (${method})`);
     }
-    // 处理HTTP异常
+    // 处理 JWT 相关错误
+    else if (this.isJwtError(exception)) {
+      // 对于JWT错误，我们设置一个标志，以便后面可以用HTTP 200响应
+      isJwtError = true;
+      // 对内部状态码仍使用401，但HTTP状态码将在响应时设为200
+      statusCode = HttpStatus.UNAUTHORIZED;
+      code = HttpStatus.UNAUTHORIZED; // 设置业务状态码为401
+      message = this.getJwtErrorMessage(exception);
+      this.logger.warn(`JWT认证失败: ${message} - ${path} (${method})`);
+    }
+    // 处理 HTTP 异常
     else if (exception instanceof HttpException) {
       statusCode = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
-      if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
+      // 处理 401 未授权错误，提供更详细的信息
+      if (
+        statusCode === HttpStatus.UNAUTHORIZED &&
+        !path.endsWith('/system/auth/login')
+      ) {
+        // 对于HTTP 401错误，我们设置一个标志，以便后面可以用HTTP 200响应
+        isJwtError = true;
+        code = HttpStatus.UNAUTHORIZED; // 设置业务状态码为401
+        message =
+          exception instanceof UnauthorizedException
+            ? 'Token 无效或缺失'
+            : this.extractErrorMessage(exceptionResponse);
+      } else if (
+        typeof exceptionResponse === 'object' &&
+        exceptionResponse !== null
+      ) {
         const exceptionObj = exceptionResponse as Record<string, unknown>;
         message = this.extractErrorMessage(exceptionObj);
 
@@ -75,6 +107,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         message =
           exception instanceof Error ? exception.message : String(exception);
       }
+    }
+
+    // 对JWT错误，按照前端要求使用HTTP 200状态码和特定格式响应
+    if (isJwtError) {
+      return response.status(HttpStatus.OK).json({
+        code: HttpStatus.UNAUTHORIZED, // 业务状态码401
+        msg: message,
+      });
     }
 
     // 构建统一的错误响应格式
@@ -103,10 +143,49 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   }
 
   /**
+   * 判断是否为JWT相关错误
+   */
+  private isJwtError(exception: unknown): boolean {
+    return (
+      exception instanceof TokenExpiredError ||
+      exception instanceof JsonWebTokenError ||
+      exception instanceof NotBeforeError
+    );
+  }
+
+  /**
+   * 获取JWT错误的详细消息
+   */
+  private getJwtErrorMessage(exception: unknown): string {
+    if (exception instanceof TokenExpiredError) {
+      return 'Token 已过期';
+    } else if (exception instanceof NotBeforeError) {
+      return 'Token 尚未生效';
+    } else if (exception instanceof JsonWebTokenError) {
+      return 'Token 格式无效';
+    } else if (
+      exception instanceof Error &&
+      exception.message.includes('refresh')
+    ) {
+      return '刷新令牌无效';
+    }
+    return '身份验证失败';
+  }
+
+  /**
    * 从异常响应对象中提取错误消息
    */
-  private extractErrorMessage(exceptionObj: Record<string, unknown>): string {
-    const message = exceptionObj.message;
+  private extractErrorMessage(exceptionObj: unknown): string {
+    if (typeof exceptionObj === 'string') {
+      return exceptionObj;
+    }
+
+    if (typeof exceptionObj !== 'object' || exceptionObj === null) {
+      return '未知错误';
+    }
+
+    const obj = exceptionObj as Record<string, unknown>;
+    const message = obj.message;
 
     if (typeof message === 'string') {
       return message;

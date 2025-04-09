@@ -25,7 +25,7 @@ export type BatchStatus =
 export type ContentType = 'template' | 'direct';
 
 // 将表名修改为与数据库表一致
-@Entity('sms_dispatch_batches')
+@Entity('sms_notification_batches')
 export class SmsNotificationBatch {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
   id!: number;
@@ -45,14 +45,13 @@ export class SmsNotificationBatch {
   user!: User;
 
   // 可选的，用户传入的请求ID，用于幂等性
-  @Index({ unique: true })
-  @Column({ name: 'request_id', type: 'varchar', length: 64, nullable: true })
-  requestId?: string;
+  // @Index({ unique: true })
+  // @Column({ name: 'request_id', type: 'varchar', length: 64, nullable: true })
+  // requestId?: string;
 
   // --- Batch Metadata ---
-  // 名称字段不存在于原表中，可能需要在迁移过程中放弃使用或添加到原表
-  // @Column({ type: 'varchar', length: 255, comment: '批次名称/描述' })
-  // name!: string;
+  @Column({ type: 'varchar', length: 255, comment: '批次名称/描述' })
+  name!: string;
 
   @Index()
   @Column({
@@ -76,36 +75,40 @@ export class SmsNotificationBatch {
   @JoinColumn({ name: 'template_id' })
   template?: SmsTemplate;
 
-  // 存储最终发送的内容
-  @Column({ type: 'text', nullable: false, comment: '要发送的短信内容' })
-  content!: string;
+  @Column({
+    name: 'template_params',
+    type: 'json',
+    nullable: true,
+    comment: '模板参数 (替换变量)',
+  })
+  templateParams?: Record<string, any> | null;
 
   // --- Recipient Information ---
   // 修改为使用JSON类型存储接收者列表
-  @Column({
-    type: 'text',
-    nullable: false,
-    comment: '用户请求的接收者号码列表',
-  })
-  recipients!: string[];
+  // @Column({
+  //   type: 'text',
+  //   nullable: false,
+  //   comment: '用户请求的接收者号码列表',
+  // })
+  // recipients!: string[];
 
-  @Column({
-    name: 'recipient_count',
-    type: 'int',
-    unsigned: true,
-    nullable: false,
-    comment: '请求中的接收者数量',
-  })
-  recipientCount!: number;
+  // @Column({
+  //   name: 'recipient_count',
+  //   type: 'int',
+  //   unsigned: true,
+  //   nullable: false,
+  //   comment: '请求中的接收者数量',
+  // })
+  // recipientCount!: number;
 
   // --- Timestamps ---
-  @Column({
-    name: 'scheduled_at',
-    type: 'datetime',
-    nullable: true,
-    comment: '预定发送时间',
-  })
-  scheduledAt?: Date | null;
+  // @Column({
+  //   name: 'scheduled_at',
+  //   type: 'datetime',
+  //   nullable: true,
+  //   comment: '预定发送时间',
+  // })
+  // scheduledAt?: Date | null;
 
   @Column({
     name: 'processing_started_at',
@@ -115,27 +118,27 @@ export class SmsNotificationBatch {
   })
   processingStartedAt?: Date | null;
 
-  @Column({
-    name: 'completed_at',
-    type: 'datetime',
-    nullable: true,
-    comment: '批次完成处理时间',
-  })
-  completedAt?: Date | null;
+  // @Column({
+  //   name: 'completed_at',
+  //   type: 'datetime',
+  //   nullable: true,
+  //   comment: '批次完成处理时间',
+  // })
+  // completedAt?: Date | null;
 
   @CreateDateColumn({
-    name: 'created_at',
+    name: 'createTime',
     type: 'datetime',
     comment: '创建时间',
   })
-  createdAt!: Date;
+  createTime!: Date;
 
   @UpdateDateColumn({
-    name: 'updated_at',
+    name: 'updateTime',
     type: 'datetime',
     comment: '更新时间',
   })
-  updatedAt!: Date;
+  updateTime!: Date;
 
   // --- Relations ---
   // 修改关联关系名称与方向
@@ -144,6 +147,7 @@ export class SmsNotificationBatch {
 
   // 添加内容类型字段
   @Column({
+    name: 'content_type',
     type: 'varchar',
     default: 'template',
     comment: '内容类型：模板或直接内容',
@@ -195,4 +199,30 @@ export class SmsNotificationBatch {
     comment: '处理完成时间',
   })
   processingCompletedAt?: Date | null;
+
+  @Column({
+    name: 'provider_id',
+    type: 'bigint',
+    unsigned: true,
+    nullable: false,
+    comment: '短信服务提供商ID',
+  })
+  providerId!: number;
+
+  @Column({
+    name: 'recipient_numbers',
+    type: 'text',
+    nullable: false,
+    comment: '接收者手机号列表，以逗号分隔',
+  })
+  recipientNumbers!: string;
+
+  @Column({
+    name: 'total_recipients',
+    type: 'int',
+    nullable: false,
+    default: 0,
+    comment: '总接收者数量',
+  })
+  totalRecipients!: number;
 }

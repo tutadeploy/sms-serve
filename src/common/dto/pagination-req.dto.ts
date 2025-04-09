@@ -12,7 +12,7 @@ export class PaginationReqDto {
   @Type(() => Number) // 确保从查询字符串转换为数字
   @IsInt({ message: '页码必须是整数' })
   @Min(1, { message: '页码不能小于1' })
-  page?: number = 1;
+  pageNo?: number = 1;
 
   @ApiPropertyOptional({
     description: '每页数量',

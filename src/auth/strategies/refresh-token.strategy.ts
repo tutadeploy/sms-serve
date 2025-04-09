@@ -49,7 +49,7 @@ export class RefreshTokenStrategy extends PassportStrategy(
     const { userId } = payload;
 
     try {
-      const user = await this.userService.findById(userId);
+      const user = await this.userService.findOne(userId);
 
       if (!user || !user.isActive) {
         throw new UnauthorizedException('用户不存在或已被禁用');

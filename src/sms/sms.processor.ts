@@ -157,14 +157,13 @@ export class SmsProcessor {
       // 延迟一小段时间，确保数据库更新有足够时间传播
       await new Promise((resolve) => setTimeout(resolve, 200)); // 延迟 200ms
 
-      const isComplete =
-        await this.smsService.isBatchProcessingComplete(batchId);
+      const isComplete = await this.smsService.isAllMessagesProcessed(batchId);
 
       if (isComplete) {
         this.logger.log(
           `批次 ${batchId} 所有消息处理完毕，开始更新最终状态...`,
         );
-        await this.smsService.finalizeBatchStatus(batchId);
+        await this.smsService.updateBatchStatus(batchId, 'completed');
         this.logger.log(`批次 ${batchId} 最终状态更新成功。`);
       } else {
         this.logger.debug(`批次 ${batchId} 尚有消息在处理中或队列中。`);

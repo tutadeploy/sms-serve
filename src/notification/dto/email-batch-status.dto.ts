@@ -34,7 +34,7 @@ export class EmailMessageStatusDto {
     example: '2023-05-12T08:30:00Z',
     nullable: true,
   })
-  sentAt?: Date;
+  sendTime?: Date;
 
   @ApiProperty({
     description: '失败原因',
@@ -90,13 +90,13 @@ export class EmailBatchStatusDto {
     description: '批次创建时间',
     example: '2023-05-12T08:00:00Z',
   })
-  createdAt!: Date;
+  createTime!: Date;
 
   @ApiProperty({
     description: '批次最后更新时间',
     example: '2023-05-12T08:35:00Z',
   })
-  updatedAt!: Date;
+  updateTime!: Date;
 
   @ApiProperty({
     description: '批次中的邮件消息列表',

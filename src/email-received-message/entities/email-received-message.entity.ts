@@ -90,7 +90,7 @@ export class EmailReceivedMessage {
   type!: ReceivedEmailType;
 
   @CreateDateColumn({ type: 'datetime' })
-  createdAt!: Date;
+  createTime!: Date;
 
   @Column({
     name: 'status',
@@ -99,5 +99,5 @@ export class EmailReceivedMessage {
   })
   status!: MessageStatus;
 
-  // Note: No updated_at column in the schema for this table
+  // Note: No updateTime column in the schema for this table
 }

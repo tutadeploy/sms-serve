@@ -16,5 +16,8 @@
             "mode": "auto"
         }
     ],
-    "typescript.tsserver.experimental.enableProjectDiagnostics": false
+    "typescript.tsserver.experimental.enableProjectDiagnostics": false,
+    "cSpell.words": [
+        "buka"
+    ]
 }

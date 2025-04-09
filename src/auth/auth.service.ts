@@ -19,6 +19,13 @@ import { Request } from 'express';
 import { TenantService } from '../tenant/tenant.service';
 import { SsoService } from '../sso/sso.service';
 import { PermissionInfoResponseDto } from './dto/permission-info.dto';
+import { JwtPayload } from './strategies/jwt.strategy';
+import { Permission } from './entities/permission.entity';
+
+interface LogoutUser {
+  id?: number;
+  username?: string;
+}
 
 @Injectable()
 export class AuthService {
@@ -181,21 +188,21 @@ export class AuthService {
     );
 
     // 创建JWT负载
-    const payload = {
+    const refreshToken = uuidv4();
+    const payload: JwtPayload = {
       sub: user.id,
+      userId: user.id,
       username: user.username,
-      roles: [user.role],
+      roles: user.roles?.map((role) => role.name) || [user.role],
       tenantId: user.tenantId,
       clientId,
+      jti: refreshToken,
     };
 
     // 签发JWT令牌
     const accessToken = this.jwtService.sign(payload, {
       expiresIn: `${accessTokenExpiresInSeconds}s`,
     });
-
-    // 生成刷新令牌
-    const refreshToken = uuidv4();
 
     // 获取客户端信息
     const ipAddress = req.ip;
@@ -315,28 +322,31 @@ export class AuthService {
   /**
    * 注销登录
    */
-  async logout(
-    userId: number,
-    refreshToken: string,
-    sessionId?: string,
-  ): Promise<boolean> {
-    // 撤销刷新令牌
-    const updateResult = await this.tokenRepository.update(
-      { userId, refreshToken, isRevoked: false },
-      { isRevoked: true },
-    );
+  async logout(user: LogoutUser) {
+    try {
+      // 记录日志
+      this.logger.log(`User ${user?.id} logging out`);
 
-    // 如果提供了会话ID，注销会话
-    if (sessionId) {
-      try {
-        await this.ssoService.invalidateSession(sessionId);
-      } catch {
-        this.logger.warn(`注销会话失败: ${sessionId}`);
-      }
+      // 这里可以添加任何需要的清理工作，比如清除 Redis 中的 token 等
+      // 如果有需要异步操作，记得使用 await
+      await Promise.resolve(); // 确保方法是真正的异步方法
+
+      return {
+        code: 0,
+        data: true,
+        msg: '退出成功',
+      };
+    } catch (err) {
+      this.logger.error(
+        `Logout failed for user ${user?.id}:`,
+        err instanceof Error ? err.message : 'Unknown error',
+      );
+      return {
+        code: 1,
+        data: false,
+        msg: '退出失败',
+      };
     }
-
-    // 返回操作结果
-    return Boolean(updateResult.affected);
   }
 
   /**
@@ -346,36 +356,58 @@ export class AuthService {
     userId: number,
     tenantId?: number,
   ): Promise<PermissionInfoResponseDto> {
-    // 查找用户
+    // 查找用户及其关联的角色和权限
     const user = await this.userRepository.findOne({
-      where: { id: userId },
-      select: ['id', 'username', 'email', 'role', 'tenantId'],
+      where: { id: userId, ...(tenantId ? { tenantId } : {}) },
+      relations: ['roles', 'roles.permissions'],
     });
 
     if (!user) {
       throw new NotFoundException('用户不存在');
     }
 
-    // 验证租户
-    if (tenantId !== undefined) {
-      if (typeof user.tenantId === 'number' && typeof tenantId === 'number') {
-        if (user.tenantId !== tenantId) {
-          throw new UnauthorizedException('用户不属于指定租户');
-        }
-      } else {
-        const userTenantIdStr =
-          user.tenantId === null ? null : String(user.tenantId);
-        const tenantIdStr = String(tenantId);
-        if (userTenantIdStr !== tenantIdStr) {
-          throw new UnauthorizedException('用户不属于指定租户');
-        }
+    // 获取用户的所有角色
+    const roles = user.roles || [];
+    const roleNames = roles.map((role) => role.name);
+
+    // 获取用户的所有权限
+    const permissions = new Set<string>();
+    roles.forEach((role) => {
+      if (role.permissions) {
+        role.permissions.forEach((permission: Permission) => {
+          permissions.add(permission.code);
+        });
       }
+    });
+
+    // 如果用户没有任何角色，使用默认权限
+    if (permissions.size === 0) {
+      const defaultPermissions =
+        user.role === UserRole.ADMIN
+          ? ['*:*:*']
+          : ['system:sms:template:query'];
+      defaultPermissions.forEach((p) => permissions.add(p));
     }
 
-    // 获取角色和权限
-    const roles = [user.role];
-    const permissions =
-      user.role === UserRole.ADMIN ? ['*:*:*'] : ['system:sms:template:query'];
+    // 构建用户信息
+    const userInfo = {
+      id: user.id,
+      username: user.username,
+      nickname: user.nickname || '',
+      roles: roles.map((role) => ({
+        id: role.id,
+        name: role.name,
+      })),
+      email: user.email || '',
+      mobile: user.mobile || '',
+      sex: user.sex || 0,
+      avatar: user.avatar || '',
+      status: user.status || 0,
+      remark: user.remark || '',
+      loginIp: user.loginIp || '',
+      loginDate: user.loginDate || new Date(),
+      createTime: user.createTime,
+    };
 
     // 构建菜单树
     const menus = [
@@ -386,10 +418,11 @@ export class AuthService {
         component: 'Layout',
         componentName: 'Sms',
         icon: 'ep:message',
-        parentId: 0,
         visible: true,
         keepAlive: true,
         alwaysShow: true,
+        redirect: '/sms/template',
+        parentId: 0,
         children: [
           {
             id: 2,
@@ -398,9 +431,9 @@ export class AuthService {
             component: 'sms/template/index.vue',
             componentName: 'SmsTemplate',
             icon: 'ep:document',
-            parentId: 1,
             visible: true,
             keepAlive: true,
+            parentId: 1,
           },
           {
             id: 3,
@@ -409,57 +442,66 @@ export class AuthService {
             component: 'sms/send/index.vue',
             componentName: 'SmsSend',
             icon: 'ep:message',
-            parentId: 1,
             visible: true,
             keepAlive: true,
+            parentId: 1,
           },
           {
             id: 4,
-            name: '发送队列',
-            path: 'queue',
-            component: 'sms/queue/index.vue',
-            componentName: 'SmsQueue',
-            icon: 'ep:list',
-            parentId: 1,
+            name: '发送记录',
+            path: 'send-log',
+            component: 'system/sms/record/send.vue',
+            componentName: 'SmsSendLog',
+            icon: 'ep:document',
             visible: true,
             keepAlive: true,
+            parentId: 1,
           },
           {
             id: 5,
-            name: '发送记录',
-            path: 'send-log',
-            component: 'sms/send-log/index.vue',
-            componentName: 'SmsSendLog',
-            icon: 'ep:document',
-            parentId: 1,
-            visible: true,
-            keepAlive: true,
-          },
-          {
-            id: 6,
             name: '接收记录',
             path: 'receive-log',
-            component: 'sms/receive-log/index.vue',
+            component: 'system/sms/record/receive.vue',
             componentName: 'SmsReceiveLog',
             icon: 'ep:document',
-            parentId: 1,
             visible: true,
             keepAlive: true,
+            parentId: 1,
+          },
+        ],
+      },
+      {
+        id: 6,
+        name: '卡单管理',
+        path: '/pkg',
+        component: 'Layout',
+        componentName: 'Pkg',
+        icon: 'ep:document',
+        visible: true,
+        keepAlive: true,
+        alwaysShow: true,
+        redirect: '/pkg/form',
+        parentId: 0,
+        children: [
+          {
+            id: 7,
+            name: '卡单信息',
+            path: 'form',
+            component: 'pkg/form/index.vue',
+            componentName: 'PkgForm',
+            icon: 'ep:document',
+            visible: true,
+            keepAlive: true,
+            parentId: 6,
           },
         ],
       },
     ];
 
-    // 返回符合规范的权限信息
     return {
-      user: {
-        id: user.id,
-        nickname: user.username,
-        avatar: 'https://example.com/default-avatar.png',
-        deptId: null,
-      },
-      roles,
-      permissions,
+      user: userInfo,
+      roles: roleNames,
+      permissions: Array.from(permissions),
       menus,
     };
   }

@@ -6,6 +6,7 @@ import { NotificationService } from './notification.service';
 import { TemplateModule } from '../template/template.module';
 import { SmsProviderModule } from '../sms-provider/sms-provider.module';
 import { SmsDispatcherModule } from '../sms-dispatcher/sms-dispatcher.module';
+import { SmsChannelConfigModule } from '../sms-channel-config/sms-channel-config.module';
 import { SmsModule } from '../sms/sms.module';
 import { SmsNotificationBatch } from '../sms-notification-batch/entities/sms-notification-batch.entity';
 import { EmailNotificationBatch } from '../email-notification-batch/entities/email-notification-batch.entity';
@@ -27,6 +28,7 @@ import { EmailProcessor } from './email.processor';
     TemplateModule,
     SmsProviderModule,
     SmsDispatcherModule,
+    SmsChannelConfigModule,
     SmsModule,
     UserModule,
     BullModule.registerQueue({ name: 'sms' }, { name: 'email' }),

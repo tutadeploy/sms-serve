@@ -61,7 +61,7 @@ export class SmsProviderOnbukaService {
 
   /**
    * 获取Onbuka提供商配置
-   * 优先从数据库获取，如果未找到则尝试使用环境变量
+   * 从数据库获取配置
    */
   private async getOnbukaConfig(): Promise<{
     apiKey: string;
@@ -75,64 +75,37 @@ export class SmsProviderOnbukaService {
     });
 
     if (
-      provider &&
-      provider.apiKey &&
-      provider.apiSecret &&
-      provider.configDetails
+      !provider ||
+      !provider.apiKey ||
+      !provider.apiSecret ||
+      !provider.configDetails
     ) {
-      const configDetails = provider.configDetails;
-      if (!configDetails || typeof configDetails !== 'object') {
-        this.logger.error('Onbuka provider config details is not an object');
-        throw new Error(
-          'Onbuka configuration invalid: config details must be an object',
-        );
-      }
-
-      // 使用类型断言明确指定类型
-      const appidValue = configDetails.appid as unknown;
-      if (
-        appidValue === undefined ||
-        appidValue === null ||
-        typeof appidValue !== 'string'
-      ) {
-        this.logger.error(
-          'Onbuka provider in database has missing or invalid appid',
-        );
-        throw new Error(
-          'Onbuka configuration incomplete: appid missing or invalid',
-        );
-      }
-
-      return {
-        apiKey: provider.apiKey,
-        apiSecret: provider.apiSecret,
-        appid: appidValue,
-        baseUrl: provider.baseUrl || 'https://api.onbuka.com',
-      };
+      throw new Error('Onbuka provider configuration not found or incomplete');
     }
 
-    // 回退到环境变量
-    this.logger.warn(
-      'Falling back to environment variables for Onbuka configuration',
-    );
-    const apiKey = this.configService.get<string>(
-      'SMS_PROVIDER_ONBUKA_API_KEY',
-    );
-    const apiSecret = this.configService.get<string>(
-      'SMS_PROVIDER_ONBUKA_API_SECRET',
-    );
-    const appid = this.configService.get<string>('SMS_PROVIDER_ONBUKA_APPID');
-    const baseUrl =
-      this.configService.get<string>('SMS_PROVIDER_ONBUKA_BASE_URL') ||
-      'https://api.onbuka.com';
+    const configDetails = provider.configDetails;
+    if (!configDetails || typeof configDetails !== 'object') {
+      throw new Error('Onbuka provider config details is not an object');
+    }
 
-    if (!apiKey || !apiSecret || !appid) {
+    // 使用类型断言明确指定类型
+    const appidValue = configDetails.appid as unknown;
+    if (
+      appidValue === undefined ||
+      appidValue === null ||
+      typeof appidValue !== 'string'
+    ) {
       throw new Error(
-        'Onbuka configuration incomplete: missing required fields',
+        'Onbuka configuration incomplete: appid missing or invalid',
       );
     }
 
-    return { apiKey, apiSecret, appid, baseUrl };
+    return {
+      apiKey: provider.apiKey,
+      apiSecret: provider.apiSecret,
+      appid: appidValue,
+      baseUrl: provider.baseUrl || 'https://api.onbuka.com',
+    };
   }
 
   /**
@@ -158,7 +131,7 @@ export class SmsProviderOnbukaService {
       const { apiKey, apiSecret, appid, baseUrl } =
         await this.getOnbukaConfig();
 
-      const url = `${baseUrl}/v3/sendSms`;
+      const url = `${baseUrl}v3/sendSms`;
       const headers = this.generateHeaders(apiKey, apiSecret);
       const requestBody = {
         appId: appid,
@@ -171,6 +144,10 @@ export class SmsProviderOnbukaService {
       this.logger.debug(
         `Sending SMS to Onbuka: ${JSON.stringify(requestBody)}`,
       );
+
+      console.log('url', url);
+      console.log('headers', headers);
+      console.log('requestBody', requestBody);
 
       const response = await firstValueFrom(
         this.httpService.post<OnbukaSendResponse>(url, requestBody, {
@@ -295,7 +272,7 @@ export class SmsProviderOnbukaService {
       }
     }
 
-    const url = `${baseUrl}/v3/sendSms`;
+    const url = `${baseUrl}v3/sendSms`;
 
     // 合并所有手机号码，最多1000个号码
     const recipientNumbers = messages

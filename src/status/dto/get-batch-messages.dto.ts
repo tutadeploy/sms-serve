@@ -52,12 +52,12 @@ export class BatchMessagesFilterDto extends PaginationDto {
 
   @ApiProperty({
     description: '排序字段',
-    enum: ['id', 'status', 'createdAt', 'sentAt'],
+    enum: ['id', 'status', 'createTime', 'sendTime'],
     default: 'id',
     required: false,
   })
   @IsOptional()
-  @IsEnum(['id', 'status', 'createdAt', 'sentAt'], {
+  @IsEnum(['id', 'status', 'createTime', 'sendTime'], {
     message: '无效的排序字段',
   })
   sortBy?: string = 'id';

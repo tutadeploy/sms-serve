@@ -66,13 +66,13 @@ export class SsoSession {
   @ApiProperty({ description: '用户代理信息', required: false })
   userAgent: string | null = null;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: 'createTime' })
   @ApiProperty({ description: '创建时间' })
-  createdAt!: Date;
+  createTime!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: 'updateTime' })
   @ApiProperty({ description: '更新时间' })
-  updatedAt!: Date;
+  updateTime!: Date;
 
   // 关联
   @ManyToOne(() => User, { onDelete: 'CASCADE' })

@@ -1,11 +1,4 @@
-import {
-  IsNotEmpty,
-  IsString,
-  IsBoolean,
-  IsOptional,
-  ValidateNested,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsNotEmpty, IsString, IsBoolean, IsOptional } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 // Onbuka特定配置
@@ -45,9 +38,8 @@ export class CreateSmsProviderDto {
   baseUrl: string = 'https://api.onbuka.com';
 
   @ApiProperty({ description: '供应商特定配置', type: OnbukaConfigDto })
-  @ValidateNested()
-  @Type(() => OnbukaConfigDto)
-  configDetails!: OnbukaConfigDto;
+  @IsNotEmpty()
+  configDetails!: Record<string, any>;
 
   @ApiPropertyOptional({ description: '是否启用', example: true })
   @IsOptional()

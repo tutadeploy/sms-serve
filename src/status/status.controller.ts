@@ -33,6 +33,7 @@ import { SmsMessagePageReqDto } from './dto/sms-message-page.dto';
 import { SmsReceivedMessagePageReqDto } from './dto/sms-received-message-page.dto';
 import { PaginatedResponseDto } from '../common/dto/pagination.dto';
 import { EmailReceivedMessagePageReqDto } from './dto/email-received-message-page.dto';
+import { EmailReceivedMessage } from '../email-received-message/entities/email-received-message.entity';
 
 // Define the AuthenticatedUser interface
 interface AuthenticatedUser {
@@ -267,18 +268,18 @@ export class StatusController {
 
   @Get('email/received')
   @ApiOperation({
-    summary: '分页查询邮件接收记录',
+    summary: '分页查询接收到的邮件',
     description: '支持按发送人、接收人、主题和类型过滤，返回满足条件的接收记录',
   })
   @ApiOkResponse({
-    description: '成功获取邮件接收记录',
-    type: PaginatedResponseDto,
+    description: '接收到的邮件列表',
+    type: PaginatedResponseDto<EmailReceivedMessage>,
   })
   @ApiResponse({ status: 401, description: '未授权' })
-  getEmailReceivedMessages(
-    @Req() req: RequestWithUser,
+  async getEmailReceivedMessages(
     @Query() query: EmailReceivedMessagePageReqDto,
-  ) {
+    @Req() req: RequestWithUser,
+  ): Promise<PaginatedResponseDto<EmailReceivedMessage>> {
     const userId = this.getUserIdFromRequest(req);
     this.logger.log(`User ${userId} querying email received messages`);
     return this.statusService.getEmailReceivedMessages(userId, query);

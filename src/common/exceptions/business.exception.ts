@@ -6,11 +6,18 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 export enum BusinessErrorCode {
   // 通用错误
   GENERAL_ERROR = 1000,
+  MISSING_REQUIRED_PARAMS = 1001,
 
   // 用户相关错误 1100-1199
   USER_NOT_FOUND = 1100,
   USER_ALREADY_EXISTS = 1101,
   INVALID_CREDENTIALS = 1102,
+  USER_TENANT_MISMATCH = 1103,
+  USER_NO_TENANT = 1104,
+
+  // 租户相关错误 1150-1199
+  TENANT_NOT_FOUND = 1150,
+  TENANT_ALREADY_EXISTS = 1151,
 
   // 账户相关错误 1200-1299
   ACCOUNT_NOT_FOUND = 1200,
@@ -34,12 +41,22 @@ export enum BusinessErrorCode {
   // 模板相关错误 1400-1499
   TEMPLATE_NOT_FOUND = 1400,
   TEMPLATE_RENDER_ERROR = 1401,
+  TEMPLATE_LIMIT_EXCEEDED = 1402,
 
   // 权限相关错误 1500-1599
   PERMISSION_DENIED = 1500,
 
+  // 渠道相关错误 1700-1799
+  CHANNEL_CONFIG_ERROR = 1700,
+  CHANNEL_NOT_FOUND = 1701,
+  CHANNEL_SUPPORT_ERROR = 1702,
+  CHANNEL_VALIDATION_ERROR = 1703,
+
   // 第三方服务错误 1600-1699
   THIRD_PARTY_SERVICE_ERROR = 1600,
+
+  // 新增错误码
+  INVALID_COUNTRY_CODE = 10004,
 }
 
 /**
@@ -80,5 +97,11 @@ export class BusinessException extends HttpException {
    */
   getErrorCode(): BusinessErrorCode {
     return this.errorCode;
+  }
+}
+
+export class TenantNotFoundException extends BusinessException {
+  constructor(identifier: string) {
+    super(`租户 ${identifier} 不存在`, BusinessErrorCode.TENANT_NOT_FOUND);
   }
 }

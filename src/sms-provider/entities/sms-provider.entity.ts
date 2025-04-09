@@ -1,53 +1,42 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity('sms_providers')
 export class SmsProvider {
-  @PrimaryGeneratedColumn({ type: 'int', unsigned: true })
-  id!: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  // 唯一标识符，用于代码中引用服务商，如 'onbuka'
-  @Column({ type: 'varchar', length: 100, unique: true, nullable: false })
-  name!: string;
+  @Column()
+  name: string;
 
-  // 可选的显示名称，用于UI展示
-  @Column({
-    name: 'display_name',
-    type: 'varchar',
-    length: 150,
-    nullable: true,
-  })
-  displayName?: string;
+  @Column({ name: 'display_name', nullable: true })
+  displayName: string;
 
-  @Column({ name: 'api_key', type: 'varchar', length: 255, nullable: true })
-  apiKey!: string | null;
+  @Column({ name: 'api_key', nullable: true })
+  apiKey: string;
 
-  @Column({ name: 'api_secret', type: 'varchar', length: 255, nullable: true })
-  apiSecret!: string | null;
+  @Column({ name: 'api_secret', nullable: true })
+  apiSecret: string;
 
-  @Column({ name: 'base_url', type: 'varchar', length: 255, nullable: true })
-  baseUrl!: string | null;
+  @Column({ name: 'base_url', nullable: true })
+  baseUrl: string;
 
-  // 存储特定于提供商的配置，例如 Onbuka 的 appid
-  @Column({ name: 'config_details', type: 'text', nullable: true })
-  configDetails!: Record<string, any> | null;
+  @Column({ name: 'config_details', type: 'json', nullable: true })
+  configDetails: Record<string, any>;
+
+  @Column({ name: 'is_active', default: true })
+  isActive: boolean;
 
   @Column({
-    name: 'is_active',
-    type: 'boolean',
-    default: true,
-    nullable: false,
+    name: 'createTime',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
   })
-  isActive!: boolean;
+  createTime: Date;
 
-  @CreateDateColumn({ name: 'created_at', type: 'datetime' })
-  createdAt!: Date;
-
-  @UpdateDateColumn({ name: 'updated_at', type: 'datetime' })
-  updatedAt!: Date;
+  @Column({
+    name: 'updateTime',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  updateTime: Date;
 }

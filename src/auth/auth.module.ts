@@ -12,6 +12,9 @@ import { UserToken } from './entities/user-token.entity';
 import { TenantModule } from '../tenant/tenant.module';
 import { SsoModule } from '../sso/sso.module';
 import { UserModule } from '../user/user.module';
+import { Role } from './entities/role.entity';
+import { Permission } from './entities/permission.entity';
+import { UserTokenService } from './services/user-token.service';
 
 @Module({
   imports: [
@@ -27,13 +30,13 @@ import { UserModule } from '../user/user.module';
         },
       }),
     }),
-    TypeOrmModule.forFeature([User, UserToken]),
+    TypeOrmModule.forFeature([User, UserToken, Role, Permission]),
     TenantModule,
     SsoModule,
     UserModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, RefreshTokenGuard],
-  exports: [AuthService, PassportModule, JwtModule],
+  providers: [AuthService, JwtStrategy, RefreshTokenGuard, UserTokenService],
+  exports: [AuthService, PassportModule, JwtModule, UserTokenService],
 })
 export class AuthModule {}

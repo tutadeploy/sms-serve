@@ -63,13 +63,13 @@ export class UserToken {
   @ApiProperty({ description: '是否已撤销', default: false })
   isRevoked: boolean = false;
 
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: 'createTime' })
   @ApiProperty({ description: '创建时间' })
-  createdAt!: Date;
+  createTime!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: 'updateTime' })
   @ApiProperty({ description: '更新时间' })
-  updatedAt!: Date;
+  updateTime!: Date;
 
   // 关联
   @ManyToOne(() => User, { onDelete: 'CASCADE' })

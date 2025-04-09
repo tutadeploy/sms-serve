@@ -1,7 +1,7 @@
 import { Module, Global } from '@nestjs/common';
 import { SmsDispatcherService } from './sms-dispatcher.service';
 import { SmsTrackingModule } from '../sms-tracking/sms-tracking.module';
-import { SmsProviderModule } from '../../src/sms-provider/sms-provider.module'; // 导入基础 Provider 模块
+import { SmsProviderModule } from '../sms-provider/sms-provider.module'; // 导入基础 Provider 模块
 import { SmsProviderOnbukaModule } from '../sms-provider-onbuka/sms-provider-onbuka.module'; // 导入 Onbuka Provider 模块
 // 导入其他 Provider 模块...
 // import { SmsProviderAliyunModule } from '../sms-provider-aliyun/sms-provider-aliyun.module';

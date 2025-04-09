@@ -230,7 +230,7 @@ describe('PaymentController (e2e)', () => {
 
     it('should support pagination', () => {
       return request(app.getHttpServer())
-        .get(`/payment/history/${testAccount.id}?page=1&limit=10`)
+        .get(`/payment/history/${testAccount.id}?pageNo=1&limit=10`)
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200)
         .expect((res: request.Response) => {

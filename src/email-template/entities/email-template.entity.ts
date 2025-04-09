@@ -62,9 +62,9 @@ export class EmailTemplate {
   })
   variables!: string[] | null; // Assuming array of strings based on comment
 
-  @CreateDateColumn({ name: 'created_at', type: 'datetime' })
-  createdAt!: Date;
+  @CreateDateColumn({ name: 'createTime', type: 'datetime' })
+  createTime!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'datetime' })
-  updatedAt!: Date;
+  @UpdateDateColumn({ name: 'updateTime', type: 'datetime' })
+  updateTime!: Date;
 }

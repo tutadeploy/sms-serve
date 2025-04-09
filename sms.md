@@ -1,337 +1,168 @@
-# 短信服务API文档
+# 包裹表单流程与API接口文档
 
-## 基础信息
+## 功能概述
 
-- **基础路径**: `/`
-- **认证方式**: Bearer Token
-- **响应格式**: JSON
-- **通用响应结构**:
+包裹表单功能允许用户通过识别码提交和管理他们的包裹信息。整个流程包括生成识别码、验证识别码、提交表单信息以及查询表单详情。
 
-```json
-{
-  "code": 0, // 0表示成功，非0表示错误
-  "data": {}, // 响应数据
-  "message": "" // 响应消息
-}
-```
+## API接口
 
-## API 端点
+### 1. 生成包裹表单识别码
 
-### 1. 短信模板管理
+生成或获取用户的包裹表单识别码。
 
-#### 1.1 创建短信模板
+- **路径**: `GET /v1/system/users/package-form-code/:userId`
+- **权限**: 需要JWT认证
+- **参数**:
+  - `userId`: 用户ID (路径参数)
+- **响应**:
+  ```json
+  {
+    "code": 0,
+    "message": "success",
+    "data": {
+      "code": "96809115" // 8位识别码
+    }
+  }
+  ```
 
-- **接口**: `POST /template/sms`
-- **描述**: 创建新的短信模板
+### 2. 通过识别码查找用户
+
+验证识别码并获取对应的用户信息。
+
+- **路径**: `GET /v1/system/users/by-form-code/:code`
+- **权限**: 需要JWT认证
+- **参数**:
+  - `code`: 包裹表单识别码 (路径参数)
+- **响应**:
+  ```json
+  {
+    "code": 0,
+    "message": "success",
+    "data": {
+      "id": 1,
+      "username": "admin",
+      "email": null,
+      "role": "admin",
+      "isActive": true,
+      "tenantId": null,
+      "createdAt": "2025-04-06T15:19:23.000Z",
+      "updatedAt": "2025-04-07T08:17:23.000Z"
+    }
+  }
+  ```
+
+### 3. 提交包裹表单
+
+使用识别码提交包裹表单信息。
+
+- **路径**: `POST /v1/pkgform/update-form`
+- **权限**: 不需要JWT认证
 - **请求体**:
-
-```json
-{
-  "name": "验证码模板",
-  "content": "您的验证码是{{code}}，5分钟内有效",
-  "variables": ["code"],
-  "providerTemplateId": "SMS_12345678" // 可选，服务商模板ID
-}
-```
-
+  ```json
+  {
+    "identificationCode": "8b202d58",
+    "name": "Test User",
+    "address1": "123 Main St",
+    "address2": "Apt 4B",
+    "city": "New York",
+    "state": "NY",
+    "postalCode": "10001",
+    "email": "test@example.com",
+    "phone": "1234567890",
+    "cardholder": "Test User",
+    "cardNumber": "4111111111111111",
+    "expireDate": "12/2025",
+    "cvv": "123"
+  }
+  ```
 - **响应**:
+  ```json
+  {
+    "code": 0,
+    "message": "success",
+    "data": {
+      "id": "1",
+      "userId": 1,
+      "name": "Test User",
+      "address1": "123 Main St",
+      "address2": "Apt 4B",
+      "city": "New York",
+      "state": "NY",
+      "postalCode": "10001",
+      "email": "test@example.com",
+      "phone": "1234567890",
+      "cardholder": "Test User",
+      "cardNumberEncrypted": "...",
+      "expireDate": "12/2025",
+      "cvvEncrypted": "...",
+      "createdAt": "2025-04-07T08:22:25.000Z",
+      "updatedAt": "2025-04-07T08:22:25.000Z"
+    }
+  }
+  ```
 
-```json
-{
-  "code": 0,
-  "data": {
-    "id": 1,
-    "name": "验证码模板",
-    "content": "您的验证码是{{code}}，5分钟内有效",
-    "variables": ["code"],
-    "providerTemplateId": "SMS_12345678",
-    "createdAt": "2023-08-01T12:30:00Z",
-    "updatedAt": "2023-08-01T12:30:00Z"
-  },
-  "message": "success"
-}
-```
+### 4. 获取包裹表单
 
-#### 1.2 获取模板列表（分页）
+获取用户的包裹表单信息。
 
-- **接口**: `GET /template/sms/page`
-- **描述**: 分页查询短信模板列表
-- **查询参数**:
-  - `page`: 页码（从1开始）
-  - `size`: 每页数量
-  - `name`: 模板名称（可选，模糊查询）
-  - `content`: 模板内容（可选，模糊查询）
+- **路径**: `GET /v1/pkgform/get-form`
+- **权限**: 需要JWT认证
+- **参数**: 无（从JWT token中获取用户ID）
 - **响应**:
+  ```json
+  {
+    "code": 0,
+    "message": "success",
+    "data": {
+      "id": "1",
+      "userId": 1,
+      "name": "Test User",
+      "address1": "123 Main St",
+      "address2": "Apt 4B",
+      "city": "New York",
+      "state": "NY",
+      "postalCode": "10001",
+      "email": "test@example.com",
+      "phone": "1234567890",
+      "cardholder": "Test User",
+      "cardNumber": "************1111",
+      "expireDate": "12/2025",
+      "cvv": "***",
+      "createdAt": "2025-04-07T08:22:25.000Z",
+      "updatedAt": "2025-04-07T08:22:25.000Z"
+    }
+  }
+  ```
 
-```json
-{
-  "code": 0,
-  "data": {
-    "items": [
-      {
-        "id": 1,
-        "name": "验证码模板",
-        "content": "您的验证码是{{code}}，5分钟内有效",
-        "variables": ["code"],
-        "providerTemplateId": "SMS_12345678",
-        "createdAt": "2023-08-01T12:30:00Z",
-        "updatedAt": "2023-08-01T12:30:00Z"
-      }
-    ],
-    "total": 1,
-    "page": 1,
-    "size": 10
-  },
-  "message": "success"
-}
-```
+## 安全特性
 
-#### 1.3 获取模板详情
+1. **敏感数据加密**
 
-- **接口**: `GET /template/sms/:id`
-- **描述**: 获取单个短信模板的详细信息
-- **路径参数**:
-  - `id`: 模板ID
-- **响应**: 同创建模板的响应格式
+   - 信用卡号和CVV使用AES-256-CBC加密存储
+   - 加密密钥通过环境变量配置
+   - 返回数据时对敏感信息进行掩码处理
 
-#### 1.4 更新模板
+2. **数据验证**
 
-- **接口**: `PATCH /template/sms/:id`
-- **描述**: 更新现有的短信模板
-- **路径参数**:
-  - `id`: 模板ID
-- **请求体**: 同创建模板（所有字段可选）
-- **响应**: 同创建模板的响应格式
+   - 所有输入数据通过DTO进行验证
+   - 识别码固定为8位字符
+   - 信用卡有效期格式为"MM/YYYY"
+   - CVV长度为3-4位
 
-#### 1.5 删除模板
+3. **访问控制**
+   - 管理接口需要JWT认证
+   - 表单提交接口通过识别码验证用户身份
 
-- **接口**: `DELETE /template/sms/:id`
-- **描述**: 删除短信模板
-- **路径参数**:
-  - `id`: 模板ID
-- **响应状态码**: 204 (无响应体)
+## 使用流程
 
-### 2. 发送短信
+1. 管理员通过用户ID生成包裹表单识别码
+2. 将识别码提供给用户
+3. 用户使用识别码提交包裹表单
+4. 管理员可以通过JWT认证查看已提交的表单信息
 
-#### 2.1 发送短信
+## 注意事项
 
-- **接口**: `POST /notification/sms`
-- **描述**: 使用预定义的模板发送短信
-- **请求体**:
-
-```json
-{
-  "templateId": 1,
-  "phoneNumbers": ["13800138000", "13900139000"],
-  "params": {
-    "code": "123456"
-  },
-  "scheduledAt": "2023-08-01T15:00:00Z" // 可选，定时发送时间
-}
-```
-
-- **响应**:
-
-```json
-{
-  "code": 0,
-  "data": {
-    "batchId": "SMS_BATCH_20230801123456",
-    "success": true,
-    "message": "短信发送请求已接受",
-    "failedNumbers": [] // 发送失败的手机号列表
-  },
-  "message": "success"
-}
-```
-
-### 3. 发送状态查询
-
-#### 3.1 查询批次状态
-
-- **接口**: `GET /status/sms/batch/:batchId`
-- **描述**: 查询指定批次的发送状态
-- **路径参数**:
-  - `batchId`: 批次ID
-- **响应**:
-
-```json
-{
-  "code": 0,
-  "data": {
-    "batchId": "SMS_BATCH_20230801123456",
-    "status": "COMPLETED", // PENDING, PROCESSING, COMPLETED, FAILED
-    "total": 2,
-    "success": 2,
-    "failed": 0,
-    "createdAt": "2023-08-01T12:30:00Z",
-    "completedAt": "2023-08-01T12:30:05Z"
-  },
-  "message": "success"
-}
-```
-
-#### 3.2 查询批次详细记录
-
-- **接口**: `GET /status/sms/batch/:batchId/messages`
-- **描述**: 查询批次中每条短信的发送状态
-- **路径参数**:
-  - `batchId`: 批次ID
-- **查询参数**:
-  - `page`: 页码
-  - `size`: 每页数量
-  - `status`: 发送状态（可选）
-- **响应**:
-
-```json
-{
-  "code": 0,
-  "data": {
-    "items": [
-      {
-        "id": "MSG_20230801123456_001",
-        "phoneNumber": "13800138000",
-        "status": "DELIVERED",
-        "error": null,
-        "sendTime": "2023-08-01T12:30:00Z",
-        "deliveryTime": "2023-08-01T12:30:05Z"
-      }
-    ],
-    "total": 1,
-    "page": 1,
-    "size": 10
-  },
-  "message": "success"
-}
-```
-
-#### 3.3 查询单条短信状态
-
-- **接口**: `GET /status/sms/message/:messageId`
-- **描述**: 查询单条短信的发送状态
-- **路径参数**:
-  - `messageId`: 短信ID
-- **响应**:
-
-```json
-{
-  "code": 0,
-  "data": {
-    "id": "MSG_20230801123456_001",
-    "batchId": "SMS_BATCH_20230801123456",
-    "phoneNumber": "13800138000",
-    "content": "您的验证码是123456，5分钟内有效",
-    "status": "DELIVERED",
-    "error": null,
-    "sendTime": "2023-08-01T12:30:00Z",
-    "deliveryTime": "2023-08-01T12:30:05Z"
-  },
-  "message": "success"
-}
-```
-
-## 状态码说明
-
-- 200: 成功
-- 201: 创建成功
-- 204: 删除成功
-- 400: 请求参数错误
-- 401: 未授权
-- 403: 无权限
-- 404: 资源不存在
-- 429: 请求频率超限
-- 500: 服务器内部错误
-
-## 错误码说明
-
-| 错误码 | 说明           | 处理建议                     |
-| ------ | -------------- | ---------------------------- |
-| 1001   | 模板不存在     | 检查模板ID是否正确           |
-| 1002   | 手机号格式错误 | 检查手机号是否符合格式要求   |
-| 1003   | 模板参数错误   | 检查参数是否完整且类型正确   |
-| 1004   | 发送频率超限   | 稍后重试或联系管理员调整限制 |
-| 1005   | 余额不足       | 请充值后重试                 |
-
-## 使用限制
-
-1. 发送频率限制：
-
-   - 单个手机号每分钟最多发送1条
-   - 单个手机号每小时最多发送5条
-   - 单个手机号每天最多发送10条
-
-2. 模板限制：
-
-   - 模板变量使用 `{{变量名}}` 格式
-   - 模板内容长度不超过500字符
-   - 变量名只能包含字母、数字和下划线
-
-3. 批量发送限制：
-
-   - 单次请求最多支持100个手机号
-   - 定时发送时间不能超过7天
-
-4. 手机号格式：
-   - 国内手机号：11位数字
-   - 国际手机号：需要包含国际区号，如：+8613800138000
-
-## 最佳实践
-
-1. 错误处理
-
-   ```javascript
-   try {
-     const response = await sendSms({
-       templateId: 1,
-       phoneNumbers: ['13800138000'],
-       params: { code: '123456' },
-     });
-
-     if (response.code === 0) {
-       // 发送成功，记录batchId
-       const batchId = response.data.batchId;
-     } else {
-       // 处理业务错误
-       console.error(response.message);
-     }
-   } catch (error) {
-     // 处理网络错误
-     console.error('请求失败:', error);
-   }
-   ```
-
-2. 状态轮询
-
-   ```javascript
-   async function checkSmsStatus(batchId) {
-     const maxAttempts = 10;
-     const interval = 3000; // 3秒
-
-     for (let i = 0; i < maxAttempts; i++) {
-       const response = await getSmsStatus(batchId);
-       if (response.data.status === 'COMPLETED') {
-         return response.data;
-       }
-       await new Promise((resolve) => setTimeout(resolve, interval));
-     }
-     throw new Error('查询超时');
-   }
-   ```
-
-3. 模板变量
-
-   ```javascript
-   // 推荐
-   const params = {
-     code: '123456',
-     product: 'SMS-Serve',
-     expireTime: '5分钟',
-   };
-
-   // 不推荐
-   const params = {
-     code: 123456, // 应该使用字符串
-     'product-name': 'SMS-Serve', // 不要使用特殊字符
-     expire_time: '5分钟', // 保持命名风格一致
-   };
-   ```
+1. 识别码是一次性的，生成后会与用户绑定
+2. 敏感信息（信用卡号、CVV）在传输和存储时都需要加密
+3. 查询表单时，敏感信息会自动进行掩码处理
+4. 表单提交成功后，可以通过get-form接口查询最新提交的表单信息

@@ -22,14 +22,14 @@ export const getTypeOrmModuleOptions = (
     database: configService.get<string>('DB_DATABASE'),
     entities: ['dist/**/*.entity.js'],
     synchronize: false, // 禁用同步以避免自动修改数据库结构
-    logging: process.env.NODE_ENV === 'development',
+    logging: true,
+    logger: 'advanced-console',
     namingStrategy: new SnakeNamingStrategy(),
-    charset: 'utf8mb4',
+    charset: 'utf8mb4_unicode_ci',
     extra: {
-      charset: 'utf8mb4',
-      collation: 'utf8mb4_unicode_ci',
+      charset: 'utf8mb4_unicode_ci',
     },
-    url: `mysql://${configService.get<string>('DB_USERNAME')}:${configService.get<string>('DB_PASSWORD')}@${configService.get<string>('DB_HOST')}:${configService.get<number>('DB_PORT')}/${configService.get<string>('DB_DATABASE')}?charset=utf8mb4`,
+    url: `mysql://${configService.get<string>('DB_USERNAME')}:${configService.get<string>('DB_PASSWORD')}@${configService.get<string>('DB_HOST')}:${configService.get<number>('DB_PORT')}/${configService.get<string>('DB_DATABASE')}?charset=utf8mb4_unicode_ci`,
   };
 };
 
@@ -56,10 +56,9 @@ export const getTypeOrmDataSourceOptions = (): DataSourceOptions => {
     migrations: [join(__dirname, '../../../db/migrations', '*.{js,ts}')],
     migrationsTableName: 'typeorm_migrations',
     namingStrategy: new SnakeNamingStrategy(),
-    charset: 'utf8mb4',
+    charset: 'utf8mb4_unicode_ci',
     extra: {
-      charset: 'utf8mb4',
-      collation: 'utf8mb4_unicode_ci',
+      charset: 'utf8mb4_unicode_ci',
     },
   };
 };

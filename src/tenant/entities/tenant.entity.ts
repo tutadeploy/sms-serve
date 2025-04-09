@@ -61,13 +61,13 @@ export class Tenant {
   @ApiProperty({ description: '过期日期', required: false })
   expirationDate!: Date;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'createTime' })
   @ApiProperty({ description: '创建时间' })
-  createdAt!: Date;
+  createTime!: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updateTime' })
   @ApiProperty({ description: '更新时间' })
-  updatedAt!: Date;
+  updateTime!: Date;
 
   @OneToMany(() => User, (user) => user.tenant)
   users!: User[];

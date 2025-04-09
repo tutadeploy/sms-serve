@@ -108,9 +108,9 @@ export class SmsMessage {
   @Column({ name: 'last_status_check_at', type: 'datetime', nullable: true })
   lastStatusCheckAt?: Date;
 
-  @CreateDateColumn({ name: 'created_at', type: 'datetime' })
-  createdAt!: Date;
-
-  @UpdateDateColumn({ name: 'updated_at', type: 'datetime' })
+  @UpdateDateColumn({ name: 'updateTime', type: 'datetime' })
   updatedAt!: Date;
+
+  @CreateDateColumn({ name: 'createTime', type: 'datetime' })
+  createTime!: Date;
 }

@@ -5,7 +5,14 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, Not } from 'typeorm';
+import {
+  Repository,
+  In,
+  Not,
+  Between,
+  MoreThanOrEqual,
+  LessThanOrEqual,
+} from 'typeorm';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { InjectQueue } from '@nestjs/bull';
@@ -30,7 +37,6 @@ import { SendSmsDto } from '../notification/dto/send-sms.dto';
 import { User } from '../user/entities/user.entity';
 import { SmsProvider } from '../sms-provider/entities/sms-provider.entity';
 import { SmsTemplate } from '../template/entities/sms-template.entity';
-import { firstValueFrom } from 'rxjs';
 import { SmsSendJobData } from '../notification/interfaces/sms-send-job-data.interface';
 import { EmailSendJobData } from '../notification/interfaces/email-send-job-data.interface';
 import { SendEmailDto } from '../notification/dto/send-email.dto';
@@ -40,6 +46,13 @@ import {
   BusinessException,
   BusinessErrorCode,
 } from '../common/exceptions/business.exception';
+import { SmsChannelConfigService } from '../sms-channel-config/sms-channel-config.service';
+import { SmsBatchItemDto } from './dto/sms-batch-list.dto';
+import {
+  SmsBatchDetailDto,
+  SmsMessageItemDto,
+} from './dto/sms-batch-detail.dto';
+import { QuerySmsBatchDto } from './dto/query-sms-batch.dto';
 
 @Injectable()
 export class NotificationService {
@@ -69,6 +82,7 @@ export class NotificationService {
     @InjectQueue('sms') private readonly smsQueue: Queue,
     @InjectQueue('email') private readonly emailQueue: Queue,
     private readonly smsDispatcherService: SmsDispatcherService,
+    private readonly smsChannelConfigService: SmsChannelConfigService,
   ) {}
 
   async sendSms(
@@ -76,13 +90,14 @@ export class NotificationService {
     sendSmsDto: SendSmsDto,
   ): Promise<SmsNotificationBatch> {
     this.logger.log(`Processing SMS send request for user ${userId}`);
+
     const {
-      recipients,
-      content,
       templateId,
+      content,
+      recipients,
       variables,
       providerId,
-      scheduledAt,
+      countryCode,
     } = sendSmsDto;
 
     const provider = await this.smsProviderRepository.findOne({
@@ -92,6 +107,39 @@ export class NotificationService {
       throw new BusinessException(
         `SMS provider with ID ${providerId} not found or inactive`,
         BusinessErrorCode.SMS_PROVIDER_NOT_FOUND,
+      );
+    }
+
+    // 获取国家区号信息
+    let dialCode = '';
+    try {
+      // 根据提供商名称查询支持的国家列表
+      const supportedCountries =
+        await this.smsChannelConfigService.getSupportedCountries('buka');
+
+      // 查找指定国家代码的区号
+      const countryInfo = supportedCountries.find(
+        (country) => country.code === countryCode,
+      );
+
+      if (!countryInfo) {
+        throw new BusinessException(
+          `The country code ${countryCode} is not supported by provider ${provider.name}`,
+          BusinessErrorCode.INVALID_COUNTRY_CODE,
+        );
+      }
+
+      dialCode = countryInfo.dialCode;
+      this.logger.debug(
+        `Found dial code ${dialCode} for country ${countryCode}`,
+      );
+    } catch (error: unknown) {
+      this.logger.error(
+        `Error getting dial code for country ${countryCode}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw new BusinessException(
+        `Failed to get dial code for country ${countryCode}`,
+        BusinessErrorCode.INVALID_COUNTRY_CODE,
       );
     }
 
@@ -122,75 +170,64 @@ export class NotificationService {
       finalContent = content;
     }
 
-    if (!finalContent) {
-      throw new BadRequestException(
-        'Message content cannot be empty after processing template.',
-      );
-    }
-
-    // 创建批次记录，使用新的实体结构
+    // 创建批次记录
     const newBatchData: Partial<SmsNotificationBatch> = {
       userId,
-      // 使用可选的requestId，确保幂等性
-      requestId: `sms-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`,
+      name: `SMS Batch ${new Date().toISOString()}`,
       status: 'pending' as BatchStatus,
+      contentType: templateId ? 'template' : 'direct',
       templateId: templateId || null,
-      content: finalContent, // 直接存储最终内容
-      recipients, // JSON数组形式存储接收者
-      recipientCount: recipients.length,
-      scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
+      templateParams: variables || null,
+      directContent: templateId ? undefined : finalContent,
+      providerId,
+      recipientNumbers: recipients.join(','),
+      totalRecipients: recipients.length,
+      processedCount: 0,
+      successCount: 0,
+      failureCount: 0,
     };
 
     const newBatch = this.smsBatchRepository.create(newBatchData);
-
-    const savedBatch: SmsNotificationBatch =
-      await this.smsBatchRepository.save(newBatch);
-
-    if (!savedBatch || !savedBatch.id) {
-      this.logger.error(`Failed to save SMS batch for user ${userId}.`);
-      throw new Error('Failed to save SMS batch.');
-    }
+    const savedBatch = await this.smsBatchRepository.save(newBatch);
 
     this.logger.log(
       `Created SMS batch ${savedBatch.id}, status: ${savedBatch.status}`,
     );
 
-    // 为每个接收者创建消息记录
+    // 为每个接收者创建消息记录，并拼接区号
     for (const recipient of recipients) {
-      const smsMessageData: Partial<SmsMessage> = {
+      // 拼接区号和手机号，对于 Buka 服务商，不添加 + 号
+      const formattedNumber = dialCode.startsWith('+')
+        ? dialCode.substring(1) + recipient // 去掉 + 号
+        : dialCode + recipient;
+
+      const smsMessage = this.smsMessageRepository.create({
         batchId: savedBatch.id,
-        providerId: provider.id, // 设置服务商ID
-        recipientNumber: recipient,
-        status: 'queued' as SmsStatus,
-      };
+        recipientNumber: formattedNumber,
+        status: 'queued',
+        providerId,
+      });
 
-      const smsMessage = this.smsMessageRepository.create(smsMessageData);
-      const savedSmsMessage = await this.smsMessageRepository.save(smsMessage);
+      const savedMessage = await this.smsMessageRepository.save(smsMessage);
 
-      if (!savedSmsMessage || !savedSmsMessage.id) {
-        this.logger.error(
-          `Failed to save SMS message for batch ${savedBatch.id}, recipient ${recipient}.`,
-        );
-        continue;
-      }
-
-      // 添加到队列中处理
+      // 创建发送任务
       const jobData: SmsSendJobData = {
         batchId: savedBatch.id,
-        messageId: savedSmsMessage.id,
-        provider: provider.id,
-        recipient: recipient,
+        messageId: savedMessage.id,
+        provider: providerId,
+        recipient: formattedNumber,
         content: finalContent,
       };
 
-      const jobOptions = scheduledAt
-        ? { delay: new Date(scheduledAt).getTime() - Date.now() }
-        : {};
-
-      await this.smsQueue.add(jobData, jobOptions);
-      this.logger.debug(
-        `Added SMS job for message ${savedSmsMessage.id} to queue`,
-      );
+      await this.smsQueue.add(jobData, {
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 2000,
+        },
+        removeOnComplete: true,
+        removeOnFail: false,
+      });
     }
 
     return savedBatch;
@@ -297,79 +334,6 @@ export class NotificationService {
     return savedBatch;
   }
 
-  private async callOnbukaApi(
-    recipient: string,
-    message: string,
-  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
-    const apiKey = this.configService.get<string>(
-      'SMS_PROVIDER_ONBUKA_API_KEY',
-    );
-    const apiSecret = this.configService.get<string>(
-      'SMS_PROVIDER_ONBUKA_API_SECRET',
-    );
-    const baseUrl = this.configService.get<string>(
-      'SMS_PROVIDER_ONBUKA_BASE_URL',
-    );
-
-    if (!apiKey || !apiSecret || !baseUrl) {
-      this.logger.error('Onbuka API credentials or base URL not configured.');
-      throw new Error('SMS provider configuration error.');
-    }
-
-    const url = `${baseUrl}/v1/sms/send`; // Fictional endpoint
-    const payload = {
-      apiKey: apiKey,
-      apiSecret: apiSecret, // Or use Authorization header
-      to: recipient,
-      text: message,
-    };
-    const headers = {
-      'Content-Type': 'application/json',
-    };
-
-    this.logger.debug(
-      `Calling Onbuka API: URL=${url}, Payload=${JSON.stringify(payload)}`,
-    );
-
-    try {
-      const response = await firstValueFrom(
-        this.httpService.post(url, payload, { headers }),
-      );
-
-      this.logger.debug(
-        `Onbuka API response: ${JSON.stringify(response.data)}`,
-      );
-
-      const responseData = response.data as {
-        success?: boolean;
-        messageId?: string;
-        message?: string;
-      };
-      if (responseData && responseData.success) {
-        return { success: true, messageId: responseData.messageId };
-      } else {
-        throw new Error(responseData?.message || 'Onbuka API call failed');
-      }
-    } catch (error) {
-      let errorMessage = 'Unknown error';
-      if (error && typeof error === 'object') {
-        const axiosError = error as {
-          response?: { data?: { message?: string } };
-          message?: string;
-          stack?: string;
-        };
-        errorMessage =
-          axiosError.response?.data?.message ||
-          (axiosError.message ? axiosError.message : errorMessage);
-        this.logger.error(
-          `Error calling Onbuka API for ${recipient}: ${errorMessage}`,
-          axiosError.stack,
-        );
-      }
-      return { success: false, error: `Onbuka API Error: ${errorMessage}` };
-    }
-  }
-
   private substituteVariables(
     template: string,
     variables?: Record<string, any>,
@@ -398,7 +362,7 @@ export class NotificationService {
     let status: SmsStatus = 'sending';
     let errorMessage: string | null = null;
     let providerMessageId: string | null = null;
-    let sentAt: Date | null = null;
+    let sendTime: Date | null = null;
 
     try {
       await this.updateSmsMessageStatus(messageId, 'sending');
@@ -413,7 +377,7 @@ export class NotificationService {
       if (result.success) {
         providerMessageId = result.providerMessageId || null;
         status = 'sent';
-        sentAt = new Date();
+        sendTime = new Date();
         this.logger.log(
           `SMS message ${messageId} sent successfully via provider ${providerId}`,
         );
@@ -438,7 +402,7 @@ export class NotificationService {
       status,
       errorMessage,
       providerMessageId,
-      sentAt,
+      sendTime,
     );
   }
 
@@ -447,7 +411,7 @@ export class NotificationService {
     status: SmsStatus,
     errorMessage?: string | null,
     providerMessageId?: string | null,
-    sentAt?: Date | null,
+    sendTime?: Date | null,
   ): Promise<void> {
     this.logger.debug(
       `Updating status for SMS message ${messageId} to ${status}`,
@@ -460,8 +424,8 @@ export class NotificationService {
           errorMessage: errorMessage === undefined ? undefined : errorMessage,
           providerMessageId:
             providerMessageId === undefined ? undefined : providerMessageId,
-          sentAt: sentAt === undefined ? undefined : sentAt,
-          statusUpdatedAt: new Date(),
+          sendTime: sendTime === undefined ? undefined : sendTime,
+          statusUpdateTime: new Date(),
         },
       );
     } catch (error) {
@@ -580,7 +544,7 @@ export class NotificationService {
     let status: EmailStatus = 'sending';
     let errorMessage: string | null = null;
     let providerMessageId: string | null = null;
-    let sentAt: Date | null = null;
+    let sendTime: Date | null = null;
 
     try {
       await this.updateEmailMessageStatus(messageId, 'sending');
@@ -589,7 +553,7 @@ export class NotificationService {
       if (mailProvider === 'sendgrid') {
         providerMessageId = `fake-provider-id-${messageId}`;
         status = 'sent';
-        sentAt = new Date();
+        sendTime = new Date();
         this.logger.log(
           `Email message ${messageId} sent successfully via ${mailProvider}`,
         );
@@ -601,7 +565,7 @@ export class NotificationService {
         if (bodyHtml) this.logger.log(`HTML: ${bodyHtml.substring(0, 100)}...`);
         this.logger.log(`--- END MOCK EMAIL ---`);
         status = 'sent';
-        sentAt = new Date();
+        sendTime = new Date();
       } else {
         throw new Error(`Unsupported mail provider: ${mailProvider}`);
       }
@@ -620,7 +584,7 @@ export class NotificationService {
       status,
       errorMessage,
       providerMessageId,
-      sentAt,
+      sendTime,
     );
   }
 
@@ -629,7 +593,7 @@ export class NotificationService {
     status: EmailStatus,
     errorMessage?: string | null,
     providerMessageId?: string | null,
-    sentAt?: Date | null,
+    sendTime?: Date | null,
   ): Promise<void> {
     this.logger.debug(
       `Updating status for email message ${messageId} to ${status}`,
@@ -642,8 +606,8 @@ export class NotificationService {
           errorMessage: errorMessage === undefined ? undefined : errorMessage,
           providerMessageId:
             providerMessageId === undefined ? undefined : providerMessageId,
-          sentAt: sentAt === undefined ? undefined : (sentAt as Date),
-          statusUpdatedAt: new Date(),
+          sendTime: sendTime === undefined ? undefined : (sendTime as Date),
+          statusUpdateTime: new Date(),
         },
       );
     } catch (error: unknown) {
@@ -654,5 +618,204 @@ export class NotificationService {
       );
       throw error;
     }
+  }
+
+  /**
+   * 获取短信批次列表
+   * @param userId 用户ID
+   * @param queryDto 查询参数
+   * @returns 分页结果对象 { list, total }
+   */
+  async getSmsBatchList(
+    userId: number,
+    queryDto: QuerySmsBatchDto,
+  ): Promise<{ list: SmsBatchItemDto[]; total: number }> {
+    const {
+      status,
+      pageNo = 1,
+      pageSize = 10,
+      createStartTime,
+      createEndTime,
+    } = queryDto;
+    const skip = (pageNo - 1) * pageSize;
+
+    const whereConditions: Record<string, any> = { userId };
+
+    if (status) {
+      whereConditions.status = status;
+    }
+
+    if (createStartTime && createEndTime) {
+      whereConditions.createTime = Between(
+        new Date(createStartTime),
+        new Date(createEndTime),
+      );
+    } else if (createStartTime) {
+      whereConditions.createTime = MoreThanOrEqual(new Date(createStartTime));
+    } else if (createEndTime) {
+      whereConditions.createTime = LessThanOrEqual(new Date(createEndTime));
+    }
+
+    const [batches, total] = await this.smsBatchRepository.findAndCount({
+      where: whereConditions,
+      order: { createTime: 'DESC' },
+      skip,
+      take: pageSize,
+    });
+
+    const batchItems = batches.map((batch) => this.mapBatchToDto(batch));
+
+    return {
+      list: batchItems,
+      total,
+    };
+  }
+
+  /**
+   * 获取短信批次详情
+   * @param userId 用户ID
+   * @param batchId 批次ID
+   * @returns 批次详情
+   */
+  async getSmsBatchDetail(
+    userId: number,
+    batchId: number,
+  ): Promise<SmsBatchDetailDto> {
+    const batch = await this.smsBatchRepository.findOne({
+      where: { id: batchId, userId },
+    });
+
+    if (!batch) {
+      throw new NotFoundException(`Batch with ID ${batchId} not found`);
+    }
+
+    const messages = await this.smsMessageRepository.find({
+      where: { batchId },
+      order: { createTime: 'ASC' },
+    });
+
+    const messageItems = messages.map((message) =>
+      this.mapMessageToDto(message),
+    );
+
+    const batchDetail = this.mapBatchToDetailDto(batch);
+    batchDetail.messages = messageItems;
+
+    return batchDetail;
+  }
+
+  /**
+   * 将批次对象映射为DTO
+   * @param batch 批次对象
+   * @returns 批次DTO
+   */
+  private mapBatchToDto(batch: SmsNotificationBatch): SmsBatchItemDto {
+    return {
+      id: batch.id,
+      userId: batch.userId,
+      name: batch.name,
+      status: batch.status,
+      contentType: batch.contentType ?? 'template',
+      templateId: batch.templateId ?? null,
+      totalRecipients: batch.totalRecipients,
+      processedCount: batch.processedCount ?? 0,
+      successCount: batch.successCount ?? 0,
+      failureCount: batch.failureCount ?? 0,
+      createTime: batch.createTime,
+      updateTime: batch.updateTime,
+    };
+  }
+
+  /**
+   * 将批次对象映射为详情DTO
+   * @param batch 批次对象
+   * @returns 批次详情DTO
+   */
+  private mapBatchToDetailDto(batch: SmsNotificationBatch): SmsBatchDetailDto {
+    return {
+      ...this.mapBatchToDto(batch),
+      directContent: batch.directContent || null,
+      templateParams: batch.templateParams || null,
+      providerId: batch.providerId,
+      recipientNumbers: batch.recipientNumbers,
+      messages: [],
+    };
+  }
+
+  /**
+   * 将消息对象映射为DTO
+   * @param message 消息对象
+   * @returns 消息DTO
+   */
+  private mapMessageToDto(message: SmsMessage): SmsMessageItemDto {
+    return {
+      id: message.id,
+      batchId: message.batchId,
+      recipientNumber: message.recipientNumber,
+      status: message.status,
+      providerMessageId: message.providerMessageId,
+      errorMessage: message.errorMessage,
+      sendTime: message.sendTime,
+      statusUpdateTime: message.statusUpdateTime,
+      createTime: message.createTime,
+      updateTime: message.updateTime,
+    };
+  }
+
+  /**
+   * 刷新批次状态
+   * @param userId 用户ID
+   * @param batchId 批次ID
+   * @returns 更新后的批次详情
+   */
+  async refreshBatchStatus(
+    userId: number,
+    batchId: number,
+  ): Promise<SmsBatchDetailDto> {
+    const batch = await this.smsBatchRepository.findOne({
+      where: { id: batchId, userId },
+    });
+
+    if (!batch) {
+      throw new NotFoundException(`Batch with ID ${batchId} not found`);
+    }
+
+    const messages = await this.smsMessageRepository.find({
+      where: { batchId },
+    });
+
+    // 查询每条消息的最新状态
+    for (const message of messages) {
+      if (message.providerMessageId) {
+        try {
+          // 使用短信分发服务查询消息状态
+          const statusResult =
+            await this.smsDispatcherService.queryMessageStatus(
+              message.id,
+              batch.providerId,
+              message.providerMessageId,
+            );
+
+          if (statusResult.success) {
+            // 更新消息状态
+            await this.smsMessageRepository.update(message.id, {
+              status: statusResult.status as SmsStatus,
+              statusUpdateTime: statusResult.statusUpdateTime || new Date(),
+              errorMessage: statusResult.errorMessage || null,
+            });
+          }
+        } catch (error) {
+          this.logger.error(
+            `Error querying message status for message ${message.id}: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+      }
+    }
+
+    // 重新获取批次和消息
+    await this.finalizeBatchStatus(batchId);
+
+    // 返回更新后的批次详情
+    return this.getSmsBatchDetail(userId, batchId);
   }
 }

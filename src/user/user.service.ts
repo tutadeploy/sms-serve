@@ -9,10 +9,16 @@ import {
   BusinessErrorCode,
 } from '../common/exceptions/business.exception';
 import { TenantService } from '../tenant/tenant.service';
+import { QueryUserPageDto } from './dto/query-user-page.dto';
+import { UserResponseDto } from './dto/user-response.dto';
+import { UserPermissionDto } from './dto/user-permission.dto';
+import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
+  private readonly saltRounds = 10;
 
   constructor(
     @InjectRepository(User)
@@ -40,43 +46,56 @@ export class UserService {
       );
     }
 
+    // 查找租户
+    const tenant = await this.tenantService.findByName(
+      createUserDto.tenantname,
+    );
+
     // 创建新用户对象
     const user = new User();
     user.username = createUserDto.username;
-    user.email = createUserDto.email;
-
-    // 直接设置password属性，让实体的@BeforeInsert钩子处理哈希
-    user.password = createUserDto.password;
+    user.password = createUserDto.password; // 实体的 @BeforeInsert 钩子会处理密码哈希
+    user.role = createUserDto.role;
+    user.tenantId = tenant.id;
+    user.tenant = tenant;
     user.isActive = true;
 
-    // 如果提供了租户名称，则关联租户
-    if (createUserDto.tenantName) {
-      try {
-        const tenant = await this.tenantService.findByName(
-          createUserDto.tenantName,
-        );
-        user.tenantId = tenant.id;
-      } catch {
-        this.logger.warn(`找不到租户: ${createUserDto.tenantName}`);
-        // 不抛出异常，如果找不到租户则不关联
-      }
-    }
-
-    // 设置管理员角色
-    if (createUserDto.isAdmin) {
-      user.role = UserRole.ADMIN;
-    }
-
     // 保存用户
-    return this.userRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
+
+    // 创建用户租户角色关联
+    await this.userRepository
+      .createQueryBuilder()
+      .insert()
+      .into('user_tenant_roles')
+      .values({
+        user_id: savedUser.id,
+        tenant_id: tenant.id,
+        role: savedUser.role,
+      })
+      .execute();
+
+    return savedUser;
   }
 
   /**
-   * 查询所有用户
-   * @returns 用户列表
+   * 查询所有用户（分页）
+   * @param page 页码
+   * @param pageSize 每页数量
+   * @returns 用户列表和总数
    */
-  async findAll(): Promise<User[]> {
-    return this.userRepository.find();
+  async findAll(
+    page: number = 1,
+    pageSize: number = 10,
+  ): Promise<{ list: User[]; total: number }> {
+    const [users, total] = await this.userRepository.findAndCount({
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      order: { createTime: 'DESC' },
+      relations: ['roles'],
+    });
+
+    return { list: users, total };
   }
 
   /**
@@ -84,9 +103,10 @@ export class UserService {
    * @param id 用户ID
    * @returns 用户对象
    */
-  async findById(id: number): Promise<User> {
+  async findOne(id: number): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { id },
+      relations: ['roles'],
     });
 
     if (!user) {
@@ -111,8 +131,9 @@ export class UserService {
         'passwordHash',
         'role',
         'isActive',
-        'createdAt',
-        'updatedAt',
+        'tenantId',
+        'createTime',
+        'updateTime',
       ],
     });
 
@@ -138,8 +159,8 @@ export class UserService {
         'passwordHash',
         'role',
         'isActive',
-        'createdAt',
-        'updatedAt',
+        'createTime',
+        'updateTime',
       ],
     });
 
@@ -160,24 +181,19 @@ export class UserService {
     this.logger.log(`Updating user ID: ${id}`);
 
     // 查找用户
-    const user = await this.findById(id);
+    const user = await this.findOne(id);
 
-    // 更新字段
-    if (updateUserDto.email) {
-      user.email = updateUserDto.email;
-    }
-
+    // 如果更新密码，需要加密
     if (updateUserDto.password) {
-      // 直接设置password属性，让实体的@BeforeUpdate钩子处理哈希
-      user.password = updateUserDto.password;
+      updateUserDto.password = await bcrypt.hash(
+        updateUserDto.password,
+        this.saltRounds,
+      );
     }
 
-    if (updateUserDto.isActive !== undefined) {
-      user.isActive = updateUserDto.isActive;
-    }
-
-    // 保存更新
-    return this.userRepository.save(user);
+    // 更新用户信息
+    const updatedUser = Object.assign(user, updateUserDto) as User;
+    return this.userRepository.save(updatedUser);
   }
 
   /**
@@ -188,7 +204,7 @@ export class UserService {
   async remove(id: number): Promise<void> {
     this.logger.log(`Removing user ID: ${id}`);
 
-    const user = await this.findById(id);
+    const user = await this.findOne(id);
     await this.userRepository.remove(user);
   }
 
@@ -216,6 +232,201 @@ export class UserService {
     }
 
     const user = await queryBuilder.getOne();
+    return user;
+  }
+
+  /**
+   * 通过租户名查询用户列表
+   * @param tenantname 租户名称
+   * @returns 用户列表
+   */
+  async findByTenantName(tenantname: string): Promise<User[]> {
+    this.logger.log(`Finding users by tenant name: ${tenantname}`);
+
+    // 查找租户
+    const tenant = await this.tenantService.findByName(tenantname);
+
+    // 查找该租户下的所有用户
+    const users = await this.userRepository.find({
+      where: { tenantId: tenant.id },
+      relations: ['tenant'],
+    });
+
+    // 删除敏感信息
+    return users.map((user) => {
+      const userResponse = { ...user } as Partial<User> & {
+        passwordHash?: string;
+      };
+      delete userResponse.passwordHash;
+      return userResponse as User;
+    });
+  }
+
+  /**
+   * 分页查询用户列表
+   * @param queryDto 分页和筛选参数
+   * @returns 用户列表和总数
+   */
+  async findPage(
+    queryDto: QueryUserPageDto,
+  ): Promise<{ list: UserResponseDto[]; total: number }> {
+    const { pageNo = 1, pageSize = 10, username, email, tenantId } = queryDto;
+    const skip = (pageNo - 1) * pageSize;
+
+    const where: FindOptionsWhere<User> = {};
+    if (username) {
+      where.username = username;
+    }
+    if (email) {
+      where.email = email;
+    }
+    if (tenantId) {
+      where.tenantId = tenantId;
+    }
+
+    const [users, total] = await this.userRepository.findAndCount({
+      where,
+      skip,
+      take: pageSize,
+      order: { createTime: 'DESC' },
+      relations: ['tenant'],
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        isActive: true,
+        tenantId: true,
+        createTime: true,
+        updateTime: true,
+      },
+    });
+
+    return { list: users as UserResponseDto[], total };
+  }
+
+  /**
+   * 获取用户权限信息
+   * @param userId 用户ID
+   * @returns 用户权限信息
+   */
+  async getUserPermissions(userId: number): Promise<UserPermissionDto> {
+    this.logger.log(`Getting permissions for user ID: ${userId}`);
+
+    // 根据角色获取权限列表
+    const rolePermissionMap = {
+      [UserRole.ADMIN]: [
+        'user:create',
+        'user:read',
+        'user:update',
+        'user:delete',
+        'tenant:create',
+        'tenant:read',
+        'tenant:update',
+        'tenant:delete',
+        'template:create',
+        'template:read',
+        'template:update',
+        'template:delete',
+        'notification:create',
+        'notification:read',
+        'notification:send',
+        'account:create',
+        'account:read',
+        'account:update',
+      ],
+      [UserRole.USER]: [
+        'user:read',
+        'template:read',
+        'template:create',
+        'notification:read',
+        'notification:send',
+        'account:read',
+      ],
+    };
+
+    // 获取用户信息
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: ['tenant'],
+    });
+
+    if (!user) {
+      throw new NotFoundException(`用户ID ${userId} 不存在`);
+    }
+
+    // 根据用户角色获取权限
+    const permissions = rolePermissionMap[user.role] || [];
+
+    return {
+      userId: user.id,
+      username: user.username,
+      role: user.role,
+      tenantId: user.tenantId,
+      tenantName: user.tenant?.name || null,
+      permissions,
+    };
+  }
+
+  async getUserProfile(userId: number) {
+    const user = await this.findOne(userId);
+    return user;
+  }
+
+  /**
+   * 生成并保存用户的包裹表单识别码
+   * @param userId 用户ID
+   * @returns 生成的识别码
+   */
+  async generatePackageFormCode(userId: number): Promise<string> {
+    const user = await this.findOne(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    // 如果用户已经有识别码，直接返回
+    if (user.packageFormCode) {
+      return user.packageFormCode;
+    }
+
+    // 生成新的识别码
+    let code = crypto.randomBytes(4).toString('hex');
+    let isUnique = false;
+
+    // 确保生成的识别码是唯一的
+    while (!isUnique) {
+      const existingUser = await this.userRepository.findOne({
+        where: { packageFormCode: code },
+      });
+
+      if (!existingUser) {
+        isUnique = true;
+      } else {
+        code = crypto.randomBytes(4).toString('hex');
+      }
+    }
+
+    // 保存识别码
+    user.packageFormCode = code;
+    await this.userRepository.save(user);
+
+    return code;
+  }
+
+  /**
+   * 通过识别码查找用户
+   * @param code 识别码
+   * @returns 用户对象
+   */
+  async findByPackageFormCode(code: string): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { packageFormCode: code },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`Invalid package form code: ${code}`);
+    }
+
     return user;
   }
 }

@@ -43,8 +43,8 @@ describe('TemplateService', () => {
     role: UserRole.USER,
     isActive: true,
     passwordHash: 'hashed',
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createTime: new Date(),
+    updateTime: new Date(),
     validatePassword: jest.fn(),
     hashPassword: jest.fn(),
     accounts: [],
@@ -58,8 +58,8 @@ describe('TemplateService', () => {
     variables: ['name'],
     providerTemplateId: null,
     user: mockUser,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createTime: new Date(),
+    updateTime: new Date(),
   };
 
   const mockEmailTemplate: EmailTemplate = {
@@ -71,8 +71,8 @@ describe('TemplateService', () => {
     bodyText: null,
     variables: ['topic', 'content'],
     user: mockUser,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createTime: new Date(),
+    updateTime: new Date(),
   };
 
   beforeEach(async () => {

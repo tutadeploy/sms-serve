@@ -27,8 +27,38 @@ export class SmsMessageResponseDto {
   @ApiProperty({
     description: '短信内容',
     example: '您的验证码是: 123456，5分钟内有效',
+    nullable: true,
   })
-  content!: string;
+  directContent?: string;
+
+  @ApiProperty({
+    description: '内容类型',
+    example: 'template',
+    enum: ['template', 'direct'],
+    nullable: true,
+  })
+  contentType?: string;
+
+  @ApiProperty({
+    description: '模板ID',
+    example: 1,
+    nullable: true,
+  })
+  templateId?: number;
+
+  @ApiProperty({
+    description: '模板名称',
+    example: '验证码模板',
+    nullable: true,
+  })
+  templateName?: string;
+
+  @ApiProperty({
+    description: '模板参数',
+    example: { code: '123456' },
+    nullable: true,
+  })
+  templateParams?: Record<string, any>;
 
   @ApiProperty({
     description: '发送状态',
@@ -69,13 +99,15 @@ export class SmsMessageResponseDto {
     required: false,
     nullable: true,
   })
-  sentAt?: Date;
+  sendTime?: Date;
 
   @ApiProperty({
     description: '状态更新时间',
     example: '2023-08-01T12:35:00Z',
+    required: false,
+    nullable: true,
   })
-  statusUpdatedAt!: Date;
+  statusUpdateTime?: Date;
 }
 
 /**
@@ -129,13 +161,13 @@ export class SmsBatchResponseDto {
     description: '创建时间',
     example: '2023-08-01T12:30:00Z',
   })
-  createdAt!: Date;
+  createTime!: Date;
 
   @ApiProperty({
     description: '更新时间',
     example: '2023-08-01T12:36:00Z',
   })
-  updatedAt!: Date;
+  updateTime!: Date;
 
   @ApiProperty({
     description: '计划发送时间（如果是定时发送）',
@@ -194,5 +226,5 @@ export class SendSmsResponseDto {
     description: '创建时间',
     example: '2023-08-01T12:30:00Z',
   })
-  createdAt!: Date;
+  createTime!: Date;
 }

@@ -24,8 +24,8 @@ export class CreateSmsNotificationBatchesTable1743799508960
                 \`failure_count\` INT NOT NULL DEFAULT 0 COMMENT '发送失败数量',
                 \`processing_started_at\` TIMESTAMP NULL COMMENT '处理开始时间',
                 \`processing_completed_at\` TIMESTAMP NULL COMMENT '处理完成时间',
-                \`created_at\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-                \`updated_at\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                \`createTime\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                \`updateTime\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                 INDEX \`idx_user_id\` (\`user_id\`),
                 INDEX \`idx_status\` (\`status\`),
                 FOREIGN KEY (\`user_id\`) REFERENCES \`users\`(\`id\`) ON DELETE RESTRICT
@@ -44,8 +44,8 @@ export class CreateSmsNotificationBatchesTable1743799508960
                 \`error_message\` TEXT NULL COMMENT '错误信息描述',
                 \`sent_at\` TIMESTAMP NULL COMMENT 'API调用发送时间',
                 \`status_updated_at\` TIMESTAMP NULL COMMENT '状态最后更新时间 (来自回调或查询)',
-                \`created_at\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-                \`updated_at\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+                \`createTime\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                \`updateTime\` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
                 INDEX \`idx_batch_id\` (\`batch_id\`),
                 INDEX \`idx_status\` (\`status\`),
                 FOREIGN KEY (\`batch_id\`) REFERENCES \`sms_notification_batches\`(\`id\`) ON DELETE CASCADE

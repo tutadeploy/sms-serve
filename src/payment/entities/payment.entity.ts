@@ -55,11 +55,11 @@ export class Payment {
     name: 'payment_method',
     type: 'varchar',
   })
-  paymentMethod!: string | null;
+  paymentMethod: string | null = null;
 
   @CreateDateColumn({ type: 'datetime', comment: '创建时间' })
-  createdAt!: Date;
+  createTime!: Date;
 
   @UpdateDateColumn({ type: 'datetime', comment: '更新时间' })
-  updatedAt!: Date;
+  updateTime!: Date;
 }

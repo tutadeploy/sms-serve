@@ -65,8 +65,8 @@ export class SmsReceivedMessage {
   @Column({ name: 'received_at', type: 'datetime' })
   receivedAt!: Date;
 
-  @CreateDateColumn({ type: 'datetime' })
-  createdAt!: Date;
+  @CreateDateColumn({ name: 'createTime', type: 'datetime' })
+  createTime!: Date;
 
-  // Note: No updated_at column in the schema for this table
+  // Note: No updateTime column in the schema for this table
 }

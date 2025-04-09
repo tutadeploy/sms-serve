@@ -18,6 +18,17 @@ interface ExceptionResponseObject {
   [key: string]: unknown; // 添加索引签名
 }
 
+// 规范化的错误响应结构
+interface StandardErrorResponse {
+  statusCode: number;
+  message: string;
+  timestamp: string;
+  path: string;
+  method: string;
+  // 可以选择性添加业务错误码
+  errorCode?: number;
+}
+
 // 修改为捕获所有异常
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -29,38 +40,32 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     // 确定状态码：如果是HttpException则获取其状态码，否则使用500
-    const status =
+    const httpStatus =
       exception instanceof HttpException
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
     // 获取错误消息
-    let errorMessage: string | string[] = '服务处理请求时发生错误';
-    let errorCode: number | undefined = undefined;
-    let errorDetails: Record<string, unknown> | null = null;
+    let errorMessage: string = '服务处理请求时发生错误';
+    let businessErrorCode: number | undefined = undefined;
 
     // 根据异常类型处理响应消息
     if (exception instanceof BusinessException) {
       // 处理业务异常
-      errorCode = exception.getErrorCode();
+      businessErrorCode = exception.getErrorCode();
       errorMessage = exception.message; // 业务异常消息可以直接展示给用户
-      const exceptionResponse =
-        exception.getResponse() as ExceptionResponseObject;
-
-      if (typeof exceptionResponse === 'object') {
-        // 从业务异常中提取其他详情，但排除敏感信息
-        errorDetails = this.sanitizeErrorDetails(exceptionResponse);
-      }
     } else if (exception instanceof HttpException) {
       // 处理HTTP异常
       const exceptionResponse = exception.getResponse();
-
       if (typeof exceptionResponse === 'object') {
         const responseObject = exceptionResponse as ExceptionResponseObject;
-        errorMessage = responseObject.message || errorMessage;
-        errorCode = responseObject.errorCode;
-        // 从HTTP异常中提取其他详情，但排除敏感信息
-        errorDetails = this.sanitizeErrorDetails(responseObject);
+        // 尝试从NestJS内置异常的message数组中获取信息
+        if (Array.isArray(responseObject.message)) {
+          errorMessage = responseObject.message.join(', ');
+        } else if (typeof responseObject.message === 'string') {
+          errorMessage = responseObject.message;
+        }
+        // 可以考虑从 responseObject.error 获取更通用的错误描述，如 'Bad Request'
       } else if (typeof exceptionResponse === 'string') {
         errorMessage = exceptionResponse;
       }
@@ -71,86 +76,58 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
     }
 
-    // 提取请求信息以便更好地记录，但确保敏感信息被保护
-    const requestInfo = this.sanitizeRequestInfo(request);
-
-    // 构建标准化错误响应
-    const errorResponse = {
-      status: 1, // 非0表示错误
-      code: errorCode || status, // 使用业务错误码或HTTP状态码
-      msg: this.formatErrorMessage(errorMessage),
-      data: null,
-      // 只在非生产环境中或特定条件下包含详细错误信息
-      error:
-        process.env.NODE_ENV !== 'production'
-          ? {
-              status,
-              details: errorDetails,
-              // 只在开发环境中包含堆栈信息
-              stack:
-                process.env.NODE_ENV === 'development'
-                  ? exception.stack
-                  : undefined,
-            }
-          : undefined,
+    // 构建标准错误响应
+    const errorResponse: StandardErrorResponse = {
+      statusCode: httpStatus,
+      message: errorMessage,
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      method: request.method,
+      // 如果是业务异常，添加业务错误码
+      errorCode: businessErrorCode,
     };
 
-    // 记录错误日志
-    const logMessage = `[${status}] ${request.method} ${
-      request.url
-    } - ${this.formatErrorMessage(errorMessage)}`;
-
+    // 记录错误日志 (日志格式保持不变，方便内部追踪)
+    const logMessage = `[${httpStatus}] ${request.method} ${request.url} - ${errorMessage}`;
+    const requestInfo = this.sanitizeRequestInfo(request);
     const logContext = {
       request: requestInfo,
       exception: {
         name: exception.name,
         message: exception.message,
-        errorCode,
+        businessErrorCode,
       },
     };
 
-    if (status >= 500) {
-      // 严重错误记录为error级别
+    if (httpStatus >= 500) {
       this.logger.error(
         logMessage,
         JSON.stringify(logContext),
         exception.stack,
       );
-    } else if (status >= 400) {
-      // 客户端错误记录为warning级别
+    } else if (httpStatus >= 400) {
       this.logger.warn(logMessage, JSON.stringify(logContext));
     } else {
-      // 其他情况记录为log级别
       this.logger.log(logMessage);
     }
 
-    // 发送响应
-    response.status(status).json(errorResponse);
+    // 发送规范化的错误响应
+    response.status(httpStatus).json(errorResponse);
   }
 
-  // 格式化错误消息以便日志记录
-  private formatErrorMessage(message: string | string[]): string {
-    if (typeof message === 'string') {
-      return message;
-    } else if (Array.isArray(message)) {
-      return message.join(', ');
-    }
-    return String(message);
-  }
-
-  // 清理请求信息中的敏感数据
+  // 清理请求信息中的敏感数据 (保持不变)
   private sanitizeRequestInfo(request: Request): Record<string, unknown> {
     return {
       method: request.method,
       url: request.url,
       query: request.query,
-      headers: this.sanitizeHeaders(request.headers),
+      headers: this.sanitizeHeaders(request.headers as Record<string, unknown>),
       body: this.sanitizeRequestBody(request.body),
       ip: request.ip,
     };
   }
 
-  // 清理请求头中的敏感信息
+  // 清理请求头中的敏感信息 (保持不变)
   private sanitizeHeaders(
     headers: Record<string, unknown>,
   ): Record<string, unknown> {
@@ -176,7 +153,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     return sanitizedHeaders;
   }
 
-  // 清理请求体中的敏感信息
+  // 清理请求体中的敏感信息 (保持不变)
   private sanitizeRequestBody(body: unknown): unknown {
     if (!body || typeof body !== 'object') return body;
 
@@ -211,24 +188,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
     return sanitized;
   }
 
-  // 清理错误详情中的敏感信息
-  private sanitizeErrorDetails(
-    details: Record<string, unknown>,
-  ): Record<string, unknown> | null {
-    if (!details) return null;
-
-    const sanitized = { ...details } as Record<string, unknown>;
-
-    // 移除可能包含敏感信息的字段
-    delete sanitized.message; // 消息已在顶层提供
-    delete sanitized.stack; // 堆栈信息单独处理
-    delete sanitized.error; // 错误类型单独处理
-
-    // 移除空对象
-    if (Object.keys(sanitized).length === 0) {
-      return null;
-    }
-
-    return sanitized;
-  }
+  // 这个方法不再需要，因为我们简化了错误响应结构
+  // private sanitizeErrorDetails(
+  //   details: Record<string, unknown>,
+  // ): Record<string, unknown> | null { ... }
 }

@@ -1,29 +1,54 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsBoolean, MinLength } from 'class-validator';
+import {
+  IsString,
+  MaxLength,
+  IsEnum,
+  IsOptional,
+  IsEmail,
+  MinLength,
+  IsBoolean,
+} from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { UserRole } from '../entities/user.entity';
 
 export class UpdateUserDto {
-  @ApiProperty({
-    description: '用户邮箱',
-    required: false,
+  @ApiPropertyOptional({
+    description: '邮箱地址',
+    example: 'new.email@example.com',
   })
   @IsOptional()
-  @IsEmail({}, { message: '请提供有效的电子邮件地址' })
+  @IsEmail({}, { message: '请输入有效的邮箱地址' })
+  @MaxLength(255)
   email?: string;
 
-  @ApiProperty({
-    description: '用户密码',
-    required: false,
-    minLength: 6,
+  @ApiPropertyOptional({
+    description: '用户角色',
+    enum: UserRole,
+    example: UserRole.USER,
   })
   @IsOptional()
-  @MinLength(6, { message: '密码长度不能少于6个字符' })
+  @IsEnum(UserRole)
+  role?: UserRole;
+
+  @ApiPropertyOptional({
+    description: '是否激活',
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+
+  @ApiPropertyOptional({
+    description: '密码 (如果需要更新)',
+    example: 'newPassword123',
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(6, { message: '密码长度至少为6位' })
   password?: string;
 
-  @ApiProperty({
-    description: '用户状态',
-    required: false,
-  })
-  @IsOptional()
-  @IsBoolean({ message: 'isActive必须是一个布尔值' })
-  isActive?: boolean;
+  // 通常不建议直接通过 API 修改租户 ID，如果需要，需谨慎处理
+  // @ApiPropertyOptional({ description: '租户ID', example: 2 })
+  // @IsOptional()
+  // @IsInt()
+  // tenantId?: number;
 }

@@ -89,10 +89,10 @@ export class EmailNotificationBatch {
   completedAt!: Date | null;
 
   @CreateDateColumn({ type: 'datetime', comment: '创建时间' })
-  createdAt!: Date;
+  createTime!: Date;
 
   @UpdateDateColumn({ type: 'datetime', comment: '更新时间' })
-  updatedAt!: Date;
+  updateTime!: Date;
 
   // --- Relations (OneToMany) ---
   @OneToMany(() => EmailMessage, (emailMessage) => emailMessage.batch)

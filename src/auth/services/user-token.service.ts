@@ -10,6 +10,7 @@ import {
   BusinessException,
   BusinessErrorCode,
 } from '../../common/exceptions/business.exception';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UserTokenService {
@@ -37,11 +38,17 @@ export class UserTokenService {
     refreshTokenExpiresAt: Date;
   }> {
     return new Promise((resolve) => {
+      // Generate a unique ID for this token generation instance
+      const refreshToken = uuidv4();
+
       const payload: JwtPayload = {
+        sub: user.id,
         userId: user.id,
         username: user.username,
-        roles: user.roles,
-        tenantId: user.tenantId || 0,
+        roles: user.roles?.map((role) => role.name) || [user.role],
+        tenantId: user.tenantId,
+        clientId,
+        jti: refreshToken,
       };
 
       // 获取过期时间配置
@@ -68,11 +75,6 @@ export class UserTokenService {
       const accessToken = this.jwtService.sign(payload, {
         expiresIn: accessTokenExpiresIn,
         secret: this.configService.get<string>('JWT_SECRET'),
-      });
-
-      const refreshToken = this.jwtService.sign(payload, {
-        expiresIn: refreshTokenExpiresIn,
-        secret: this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET'),
       });
 
       this.logger.log(

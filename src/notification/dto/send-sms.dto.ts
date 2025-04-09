@@ -23,7 +23,7 @@ export class SendSmsDto {
   providerId!: number;
 
   @ApiProperty({
-    description: '接收短信的手机号码列表',
+    description: '接收短信的手机号码列表（不包含国家区号）',
     type: [String],
     example: ['13800138000', '13912345678'],
   })
@@ -32,6 +32,15 @@ export class SendSmsDto {
   @ArrayMinSize(1)
   @IsString({ each: true })
   recipients!: string[];
+
+  @ApiProperty({
+    description: '国家代码',
+    example: 'US',
+    required: true,
+  })
+  @IsString()
+  @IsNotEmpty()
+  countryCode!: string;
 
   @ApiPropertyOptional({
     description: '短信内容 (如果未提供 templateId 则必须)',

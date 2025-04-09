@@ -28,8 +28,8 @@ interface SafeUserResponse {
   email: string;
   role: string;
   isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createTime: Date;
+  updateTime: Date;
 }
 
 interface JwtUser {
@@ -92,8 +92,8 @@ export class UserController {
       email: savedUser.email,
       role: savedUser.role,
       isActive: savedUser.isActive,
-      createdAt: savedUser.createdAt,
-      updatedAt: savedUser.updatedAt,
+      createTime: savedUser.createTime,
+      updateTime: savedUser.updateTime,
     };
 
     return {
@@ -129,8 +129,8 @@ export class UserController {
       email: user.email,
       role: user.role,
       isActive: user.isActive,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      createTime: user.createTime,
+      updateTime: user.updateTime,
     }));
 
     return {

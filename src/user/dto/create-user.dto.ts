@@ -1,44 +1,13 @@
 import {
-  IsEmail,
   IsNotEmpty,
   IsString,
   MinLength,
-  Validate,
-  ValidationArguments,
-  ValidatorConstraint,
-  ValidatorConstraintInterface,
   MaxLength,
   Matches,
-  IsOptional,
   IsEnum,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { UserRole } from '../entities/user.entity';
-
-// 自定义验证器，用于比较密码和确认密码是否一致
-@ValidatorConstraint({ name: 'isPasswordMatching', async: false })
-export class IsPasswordMatchingConstraint
-  implements ValidatorConstraintInterface
-{
-  validate(value: any, args: ValidationArguments) {
-    // Explicitly type constraint and object for potentially better linting
-    const relatedPropertyNameUntyped = args.constraints[0] as unknown;
-    const relatedPropertyName = String(relatedPropertyNameUntyped); // Expecting a string property name
-    const objectRecord = args.object as Record<string, unknown>; // Type object as a record
-    const relatedValue = objectRecord[relatedPropertyName];
-
-    // Basic check to ensure properties exist and are strings before comparison
-    return (
-      typeof value === 'string' &&
-      typeof relatedValue === 'string' &&
-      value === relatedValue
-    );
-  }
-
-  defaultMessage(/* args: ValidationArguments */) {
-    return '密码和确认密码不匹配';
-  }
-}
 
 export class CreateUserDto {
   @ApiProperty({
@@ -55,15 +24,6 @@ export class CreateUserDto {
   username!: string;
 
   @ApiProperty({
-    description: '电子邮箱',
-    example: 'admin@example.com',
-  })
-  @IsEmail({}, { message: '请输入有效的邮箱地址' })
-  @IsNotEmpty({ message: '邮箱不能为空' })
-  @MaxLength(100)
-  email!: string;
-
-  @ApiProperty({
     description: '密码',
     example: 'admin123',
   })
@@ -73,39 +33,19 @@ export class CreateUserDto {
   password!: string;
 
   @ApiProperty({
-    description: '确认密码',
-    example: 'admin123',
+    description: '租户名称',
+    example: 'PNS',
   })
-  @IsNotEmpty({ message: '确认密码不能为空' })
-  @Validate(IsPasswordMatchingConstraint, ['password'], {
-    // 使用自定义验证器
-    message: '密码和确认密码必须一致',
-  })
-  confirmPassword!: string;
-
-  @ApiPropertyOptional({
-    description: '用户角色',
-    enum: UserRole,
-    default: UserRole.USER,
-  })
-  @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
+  @IsNotEmpty({ message: '租户名称不能为空' })
+  @IsString()
+  tenantname!: string;
 
   @ApiProperty({
-    description: '是否为管理员',
-    example: true,
-    required: false,
+    description: '用户角色',
+    enum: UserRole,
+    example: UserRole.ADMIN,
   })
-  @IsOptional()
-  isAdmin?: boolean;
-
-  @ApiPropertyOptional({
-    description: '租户名称',
-    example: 'yudao',
-    required: false,
-  })
-  @IsOptional()
-  @IsString()
-  tenantName?: string;
+  @IsNotEmpty({ message: '用户角色不能为空' })
+  @IsEnum(UserRole)
+  role!: UserRole;
 }

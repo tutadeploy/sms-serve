@@ -16,7 +16,7 @@ export class PaginationDto {
   @Type(() => Number)
   @IsInt({ message: '页码必须为整数' })
   @Min(1, { message: '页码最小为1' })
-  page: number = 1;
+  pageNo: number = 1;
 
   @ApiProperty({
     description: '每页数量，默认为20，最大为100',
@@ -36,7 +36,7 @@ export class PaginationDto {
    * 获取跳过的记录数，用于数据库查询
    */
   get skip(): number {
-    return (this.page - 1) * this.limit;
+    return (this.pageNo - 1) * this.limit;
   }
 }
 
@@ -48,7 +48,7 @@ export class PaginationMeta {
     description: '当前页码',
     example: 1,
   })
-  page!: number;
+  pageNo!: number;
 
   @ApiProperty({
     description: '每页条数',
@@ -92,17 +92,17 @@ export class PaginatedResponseDto<T> {
   items: T[];
 
   constructor(items: T[], total: number, pagination: PaginationDto) {
-    const { page, limit } = pagination;
+    const { pageNo, limit } = pagination;
     const pages = Math.ceil(total / limit);
 
     this.items = items;
     this.meta = {
-      page,
+      pageNo,
       limit,
       total,
       pages,
-      hasNext: page < pages,
-      hasPrev: page > 1,
+      hasNext: pageNo < pages,
+      hasPrev: pageNo > 1,
     };
   }
 }

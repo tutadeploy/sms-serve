@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
+import { CacheModule } from '@nestjs/cache-manager';
 // import { BullBoardModule } from '@bull-board/nestjs'; // 注释掉
 // import { ExpressAdapter } from '@bull-board/express'; // 注释掉
 // import { BullAdapter } from '@bull-board/api/bullAdapter'; // 注释掉
@@ -30,6 +31,8 @@ import { TenantModule } from './tenant/tenant.module';
 import { SsoModule } from './sso/sso.module';
 import { DictModule } from './system/dict.module';
 import { NotifyMessageModule } from './system/notify-message.module';
+import { SmsChannelConfigModule } from './sms-channel-config/sms-channel-config.module';
+import { PkgformModule } from './pkgform/pkgform.module';
 
 // 创建 ExpressAdapter 实例
 // const serverAdapter = new ExpressAdapter(); // 注释掉
@@ -41,6 +44,10 @@ import { NotifyMessageModule } from './system/notify-message.module';
       isGlobal: true,
       envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
       load: configs,
+    }),
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 300, // 5 minutes
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -93,6 +100,8 @@ import { NotifyMessageModule } from './system/notify-message.module';
     SsoModule,
     DictModule,
     NotifyMessageModule,
+    SmsChannelConfigModule,
+    PkgformModule,
   ],
   controllers: [AppController],
   providers: [AppService],

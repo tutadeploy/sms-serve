@@ -17,6 +17,7 @@ import { SmsMessagePageReqDto } from './dto/sms-message-page.dto';
 import { SmsReceivedMessagePageReqDto } from './dto/sms-received-message-page.dto';
 import { EmailReceivedMessage } from '../email-received-message/entities/email-received-message.entity';
 import { EmailReceivedMessagePageReqDto } from './dto/email-received-message-page.dto';
+import { SmsMessageResponseDto } from '../sms/dto/sms-service-response.dto';
 
 @Injectable()
 export class StatusService {
@@ -84,8 +85,8 @@ export class StatusService {
         'smsMessage.status',
         'smsMessage.providerMessageId',
         'smsMessage.errorMessage',
-        'smsMessage.sentAt',
-        'smsMessage.statusUpdatedAt',
+        'smsMessage.sendTime',
+        'smsMessage.statusUpdateTime',
         'batch.id', // Include batch id for context
       ])
       .getOne();
@@ -166,7 +167,7 @@ export class StatusService {
   async getAllSmsMessages(
     userId: number,
     query: SmsMessagePageReqDto,
-  ): Promise<PaginatedResponseDto<SmsMessage>> {
+  ): Promise<PaginatedResponseDto<SmsMessageResponseDto>> {
     // 查询当前用户角色
     const user = await this.userRepository.findOne({
       where: { id: userId },
@@ -177,47 +178,53 @@ export class StatusService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
+    this.logger.log(
+      `User ${userId} querying SMS messages with filter: ${JSON.stringify(
+        query,
+      )}`,
+    );
+
     // 构建查询构建器
     const queryBuilder = this.smsMessageRepository
       .createQueryBuilder('message')
-      .innerJoin('message.batch', 'batch')
-      .innerJoin('batch.user', 'user') // 关联到用户表以获取租户信息
+      .leftJoin('message.batch', 'batch')
+      .leftJoin('batch.user', 'batchUser')
+      .leftJoin('batch.template', 'template')
       .select([
         'message.id',
         'message.recipientNumber',
         'message.status',
         'message.providerMessageId',
         'message.errorMessage',
-        'message.sentAt',
-        'message.statusUpdatedAt',
+        'message.sendTime',
+        'message.statusUpdateTime',
         'batch.id',
-        'batch.content',
-        'user.id',
-        'user.username',
-        'user.tenantId',
+        'batch.directContent',
+        'batch.contentType',
+        'batch.templateId',
+        'batch.templateParams',
+        'template.id',
+        'template.name',
       ]);
 
-    // 根据用户角色确定租户过滤条件
+    // 根据用户角色添加租户过滤条件
     if (user.role === UserRole.ADMIN) {
-      // 管理员可以查看所有消息，或按特定租户过滤
       if (query.tenantId) {
-        queryBuilder.where('user.tenantId = :tenantId', {
+        queryBuilder.andWhere('batchUser.tenantId = :tenantId', {
           tenantId: query.tenantId,
         });
       }
-      this.logger.log(
-        `Admin user ${userId} querying SMS messages${
-          query.tenantId ? ` for tenant ${query.tenantId}` : ' for all tenants'
-        }`,
-      );
     } else {
-      // 非管理员用户只能查看自己租户的消息
-      queryBuilder.where('user.tenantId = :tenantId', {
+      // 非管理员只能查看自己租户的消息
+      if (!user.tenantId) {
+        throw new BusinessException(
+          'User has no associated tenant',
+          BusinessErrorCode.USER_NO_TENANT,
+        );
+      }
+      queryBuilder.andWhere('batchUser.tenantId = :tenantId', {
         tenantId: user.tenantId,
       });
-      this.logger.log(
-        `Regular user ${userId} (tenant ${user.tenantId}) querying SMS messages`,
-      );
     }
 
     // 添加其他过滤条件
@@ -228,8 +235,8 @@ export class StatusService {
     }
 
     if (query.recipientNumber) {
-      queryBuilder.andWhere('message.recipientNumber LIKE :recipient', {
-        recipient: `%${query.recipientNumber}%`,
+      queryBuilder.andWhere('message.recipientNumber LIKE :recipientNumber', {
+        recipientNumber: `%${query.recipientNumber}%`,
       });
     }
 
@@ -239,18 +246,41 @@ export class StatusService {
       });
     }
 
-    // 默认按ID倒序排序
+    // 应用排序
     queryBuilder.orderBy('message.id', 'DESC');
 
     // 应用分页
-    const total = await queryBuilder.getCount();
-    const items = await queryBuilder
-      .skip(query.skip)
+    const [items, total] = await queryBuilder
+      .skip((query.pageNo - 1) * query.limit)
       .take(query.limit)
-      .getMany();
+      .getManyAndCount();
 
-    // 返回分页结果
-    return new PaginatedResponseDto(items, total, query);
+    // 将实体转换为DTO
+    const dtos = items.map((message) => {
+      const dto = new SmsMessageResponseDto();
+      dto.id = message.id;
+      dto.recipientNumber = message.recipientNumber;
+      dto.status = message.status;
+      dto.providerMessageId = message.providerMessageId || undefined;
+      dto.errorMessage = message.errorMessage || undefined;
+      dto.sendTime = message.sendTime || undefined;
+      dto.statusUpdateTime = message.statusUpdateTime || undefined;
+
+      if (message.batch) {
+        dto.batchId = message.batch.id;
+        dto.directContent = message.batch.directContent || undefined;
+        dto.contentType = message.batch.contentType || undefined;
+        dto.templateId = message.batch.templateId || undefined;
+        dto.templateParams = message.batch.templateParams || undefined;
+        if (message.batch.template) {
+          dto.templateName = message.batch.template.name;
+        }
+      }
+
+      return dto;
+    });
+
+    return new PaginatedResponseDto(dtos, total, query);
   }
 
   /**
@@ -367,8 +397,8 @@ export class StatusService {
         'emailMessage.status',
         'emailMessage.providerMessageId',
         'emailMessage.errorMessage',
-        'emailMessage.sentAt',
-        'emailMessage.statusUpdatedAt',
+        'emailMessage.sendTime',
+        'emailMessage.statusUpdateTime',
         'batch.id',
       ])
       .getOne();

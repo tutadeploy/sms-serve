@@ -66,17 +66,17 @@ export class EmailMessage {
   errorMessage!: string | null;
 
   @Column({ name: 'sent_at', type: 'datetime', nullable: true })
-  sentAt?: Date;
+  sendTime?: Date;
 
   @Column({ name: 'delivered_at', type: 'datetime', nullable: true })
   deliveredAt?: Date;
 
   @Column({ name: 'status_updated_at', type: 'datetime', nullable: true })
-  statusUpdatedAt?: Date;
+  statusUpdateTime?: Date;
 
-  @CreateDateColumn({ name: 'created_at', type: 'datetime' })
-  createdAt!: Date;
+  @CreateDateColumn({ name: 'createTime', type: 'datetime' })
+  createTime!: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'datetime' })
-  updatedAt!: Date;
+  @UpdateDateColumn({ name: 'updateTime', type: 'datetime' })
+  updateTime!: Date;
 }
