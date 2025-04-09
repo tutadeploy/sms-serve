@@ -11,6 +11,8 @@ import { BukaSmsChannelService } from './channels/buka-sms-channel.service';
 import { UserModule } from '../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { BukaModule } from '../sms-provider/buka/buka.module';
+import { SmsProvider } from '../sms-provider/entities/sms-provider.entity';
+import { SmsProviderModule } from '../sms-provider/sms-provider.module';
 
 @Module({
   imports: [
@@ -18,6 +20,7 @@ import { BukaModule } from '../sms-provider/buka/buka.module';
       TenantChannelConfig,
       UserChannelConfig,
       ChannelSupportedCountry,
+      SmsProvider,
     ]),
     HttpModule.register({
       timeout: 10000,
@@ -26,6 +29,7 @@ import { BukaModule } from '../sms-provider/buka/buka.module';
     UserModule,
     TenantModule,
     forwardRef(() => BukaModule),
+    forwardRef(() => SmsProviderModule),
   ],
   controllers: [SmsChannelConfigController],
   providers: [SmsChannelConfigService, BukaSmsChannelService],

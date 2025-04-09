@@ -61,17 +61,17 @@ export class SmsProviderService {
     try {
       // 检查是否已存在同名供应商
       const existingProvider = await this.smsProviderRepository.findOne({
-        where: { name: createDto.name },
+        where: {
+          name: createDto.name,
+          tenantId: createDto.tenantId, // 添加租户条件
+        },
       });
 
       if (existingProvider) {
         throw new BadRequestException(
-          `名称为"${createDto.name}"的供应商已存在`,
+          `名称为"${createDto.name}"的供应商已经为租户${createDto.tenantId}配置`,
         );
       }
-
-      // 验证API Key和Secret的有效性
-      await this.validateProviderCredentials(createDto);
 
       // 创建新供应商配置
       const provider = this.smsProviderRepository.create(createDto);
@@ -100,19 +100,19 @@ export class SmsProviderService {
         throw new NotFoundException(`ID为${id}的供应商不存在`);
       }
 
-      // 如果更新了API密钥，验证其有效性
-      if (
-        updateDto.apiKey ||
-        updateDto.apiSecret ||
-        (updateDto.configDetails && updateDto.configDetails.appid)
-      ) {
-        await this.validateProviderCredentials({
-          name: provider.name,
-          apiKey: updateDto.apiKey || provider.apiKey,
-          apiSecret: updateDto.apiSecret || provider.apiSecret,
-          configDetails: updateDto.configDetails || provider.configDetails,
-        });
-      }
+      // // 如果更新了API密钥，验证其有效性
+      // if (
+      //   updateDto.apiKey ||
+      //   updateDto.apiSecret ||
+      //   (updateDto.configDetails && updateDto.configDetails.appid)
+      // ) {
+      //   await this.validateProviderCredentials({
+      //     name: provider.name,
+      //     apiKey: updateDto.apiKey || provider.apiKey,
+      //     apiSecret: updateDto.apiSecret || provider.apiSecret,
+      //     configDetails: updateDto.configDetails || provider.configDetails,
+      //   });
+      // }
 
       // 处理configDetails字段，将其转换为JSON对象
       const updateData: Partial<SmsProvider> = { ...updateDto };
@@ -164,56 +164,71 @@ export class SmsProviderService {
 
   // 去除敏感信息
   private omitSecrets(provider: SmsProvider): Partial<SmsProvider> {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { apiSecret, ...safeProvider } = provider;
-    return safeProvider;
-  }
+    // provider已经没有apiSecret字段，直接返回即可
+    // 如果configDetails中有敏感信息，可以在这里处理
+    if (provider.configDetails && typeof provider.configDetails === 'object') {
+      const { configDetails, ...rest } = provider;
+      // 创建configDetails的副本，移除敏感字段
+      const safeConfigDetails = { ...configDetails };
 
-  // 验证供应商凭证
-  private async validateProviderCredentials(
-    provider: Partial<CreateSmsProviderDto | SmsProvider>,
-  ): Promise<boolean> {
-    // 基本验证
-    if (!provider.apiKey || !provider.apiSecret) {
-      throw new BadRequestException('API密钥和密钥密文不能为空');
-    }
-
-    // 根据供应商类型验证凭证
-    switch (provider.name?.toLowerCase()) {
-      case 'onbuka': {
-        // 安全地获取appid
-        const configDetails = provider.configDetails || {};
-        // 明确类型检查
-        if (!configDetails || typeof configDetails !== 'object') {
-          throw new BadRequestException(
-            'Onbuka配置不完整: configDetails必须是对象',
-          );
-        }
-
-        // 使用类型断言并检查，而不是直接赋值
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const appidRaw = configDetails.appid;
-        // 显式类型检查
-        if (typeof appidRaw !== 'string' || !appidRaw) {
-          throw new BadRequestException(
-            'Onbuka配置不完整: appid必须是非空字符串',
-          );
-        }
-
-        // 此时appidRaw已经通过类型检查，可以安全地作为字符串使用
-        return this.validateOnbukaCredentials(
-          provider.apiKey,
-          provider.apiSecret,
-          appidRaw,
-        );
+      // 如果configDetails中有apiSecret，删除它
+      if ('apiSecret' in safeConfigDetails) {
+        delete safeConfigDetails['apiSecret'];
       }
-      default:
-        throw new BadRequestException(`不支持的供应商类型: ${provider.name}`);
+
+      return {
+        ...rest,
+        configDetails: safeConfigDetails,
+      };
     }
+
+    return provider;
   }
+
+  // // 验证供应商凭证
+  // private async validateProviderCredentials(
+  //   provider: Partial<CreateSmsProviderDto | SmsProvider>,
+  // ): Promise<boolean> {
+  //   // 基本验证
+  //   if (!provider.apiKey || !provider.apiSecret) {
+  //     throw new BadRequestException('API密钥和密钥密文不能为空');
+  //   }
+
+  //   // 根据供应商类型验证凭证
+  //   switch (provider.name?.toLowerCase()) {
+  //     case 'onbuka': {
+  //       // 安全地获取appid
+  //       const configDetails = provider.configDetails || {};
+  //       // 明确类型检查
+  //       if (!configDetails || typeof configDetails !== 'object') {
+  //         throw new BadRequestException(
+  //           'Onbuka配置不完整: configDetails必须是对象',
+  //         );
+  //       }
+
+  //       // 使用类型断言并检查，而不是直接赋值
+  //       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  //       const appidRaw = configDetails.appid;
+  //       // 显式类型检查
+  //       if (typeof appidRaw !== 'string' || !appidRaw) {
+  //         throw new BadRequestException(
+  //           'Onbuka配置不完整: appid必须是非空字符串',
+  //         );
+  //       }
+
+  //       // 此时appidRaw已经通过类型检查，可以安全地作为字符串使用
+  //       return this.validateOnbukaCredentials(
+  //         provider.apiKey,
+  //         provider.apiSecret,
+  //         appidRaw,
+  //       );
+  //     }
+  //     default:
+  //       throw new BadRequestException(`不支持的供应商类型: ${provider.name}`);
+  //   }
+  // }
 
   // 验证Onbuka凭证
-
   private async validateOnbukaCredentials(
     apiKey: string,
     apiSecret: string, // apiSecret在generateOnbukaHeaders中使用，但ESLint认为它未使用
@@ -290,5 +305,23 @@ export class SmsProviderService {
       Timestamp: timestamp,
       'Api-Key': apiKey,
     };
+  }
+
+  // 在适当位置添加findAllByTenant方法
+  async findAllByTenant(
+    tenantId: number,
+    onlyActive = true,
+  ): Promise<SmsProvider[]> {
+    try {
+      return await this.smsProviderRepository.find({
+        where: onlyActive ? { isActive: true, tenantId } : { tenantId },
+        order: { name: 'ASC' },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Error finding SMS providers for tenant ${tenantId}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      return [];
+    }
   }
 }

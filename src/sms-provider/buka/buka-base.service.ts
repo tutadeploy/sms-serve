@@ -28,17 +28,22 @@ export class BukaBaseService {
       },
     });
 
-    if (
-      !provider ||
-      !provider.apiKey ||
-      !provider.apiSecret ||
-      !provider.baseUrl
-    ) {
-      throw new Error('Buka API credentials not found in database');
+    if (!provider || !provider.baseUrl || !provider.configDetails) {
+      throw new Error('Buka API configuration not found in database');
     }
 
-    this.apiKey = provider.apiKey;
-    this.apiSecret = provider.apiSecret;
+    const configDetails = provider.configDetails;
+    const apiKey = configDetails.apiKey as string;
+    const apiSecret = configDetails.apiSecret as string;
+
+    if (!apiKey || !apiSecret) {
+      throw new Error(
+        'Buka API credentials (apiKey/apiSecret) not found in configuration',
+      );
+    }
+
+    this.apiKey = apiKey;
+    this.apiSecret = apiSecret;
     this.baseUrl = provider.baseUrl;
   }
 

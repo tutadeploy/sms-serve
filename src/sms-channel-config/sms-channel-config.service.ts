@@ -16,6 +16,7 @@ import {
   BusinessErrorCode,
 } from '../common/exceptions/business.exception';
 import { BukaService } from '../sms-provider/buka/buka.service';
+import { SmsProvider } from '../sms-provider/entities/sms-provider.entity';
 
 @Injectable()
 export class SmsChannelConfigService {
@@ -34,6 +35,8 @@ export class SmsChannelConfigService {
     private readonly tenantService: TenantService,
     @Inject(forwardRef(() => BukaService))
     private readonly bukaService: BukaService,
+    @InjectRepository(SmsProvider)
+    private readonly smsProviderRepository: Repository<SmsProvider>,
   ) {
     // 注册各个渠道服务
     this.registerChannelService(this.bukaSmsChannelService);
@@ -97,9 +100,19 @@ export class SmsChannelConfigService {
       if (existingConfig) {
         existingConfig.apiKey = apiKey;
         existingConfig.apiSecret = apiSecret;
-        existingConfig.baseUrl = baseUrl ?? existingConfig.baseUrl;
-        existingConfig.configDetails =
-          configDetails ?? existingConfig.configDetails;
+        if (baseUrl) {
+          // 将baseUrl存储在configDetails中，因为实体中已经没有baseUrl字段
+          existingConfig.configDetails = {
+            ...existingConfig.configDetails,
+            baseUrl,
+          };
+        }
+        if (configDetails) {
+          existingConfig.configDetails = {
+            ...existingConfig.configDetails,
+            ...configDetails,
+          };
+        }
         existingConfig.isActive = true;
         return this.tenantChannelConfigRepository.save(existingConfig);
       }
@@ -109,8 +122,10 @@ export class SmsChannelConfigService {
         channel,
         apiKey,
         apiSecret,
-        baseUrl: baseUrl ?? '',
-        configDetails: configDetails ?? {},
+        configDetails: {
+          ...(configDetails || {}),
+          ...(baseUrl ? { baseUrl } : {}),
+        },
         isActive: true,
       });
 
@@ -206,27 +221,32 @@ export class SmsChannelConfigService {
     userId: number,
   ): Promise<{ balance: number }> {
     try {
+      // 验证租户是否配置了Buka渠道
       const tenantConfig = await this.tenantChannelConfigRepository.findOne({
         where: {
           tenantId,
-          channel: 'buka',
+          channel: 'onbuka',
           isActive: true,
         },
       });
 
-      if (!tenantConfig || !tenantConfig.isActive) {
+      if (!tenantConfig) {
         throw new BusinessException(
           '租户未配置Buka渠道或配置未激活',
           BusinessErrorCode.CHANNEL_CONFIG_ERROR,
         );
       }
 
+      // 调用BukaService获取余额
       const result = await this.bukaService.getBalance(tenantId, userId);
       this.logger.log(
         `[SmsChannelConfigService] BukaService.getBalance result: ${JSON.stringify(result)}`,
       );
       return result;
-    } catch (error: unknown) {
+    } catch (error) {
+      this.logger.error(
+        `[SmsChannelConfigService] Failed to get Buka balance: ${error instanceof Error ? error.message : String(error)}`,
+      );
       throw new BusinessException(
         error instanceof Error ? error.message : 'Failed to get Buka balance',
         BusinessErrorCode.CHANNEL_CONFIG_ERROR,

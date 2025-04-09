@@ -74,18 +74,23 @@ export class SmsProviderOnbukaService {
       where: { name: 'onbuka', isActive: true },
     });
 
-    if (
-      !provider ||
-      !provider.apiKey ||
-      !provider.apiSecret ||
-      !provider.configDetails
-    ) {
+    if (!provider || !provider.configDetails) {
       throw new Error('Onbuka provider configuration not found or incomplete');
     }
 
     const configDetails = provider.configDetails;
     if (!configDetails || typeof configDetails !== 'object') {
       throw new Error('Onbuka provider config details is not an object');
+    }
+
+    // 从configDetails中获取apiKey和apiSecret
+    const apiKey = configDetails.apiKey as string;
+    const apiSecret = configDetails.apiSecret as string;
+
+    if (!apiKey || !apiSecret) {
+      throw new Error(
+        'Onbuka authentication credentials (apiKey/apiSecret) missing or invalid',
+      );
     }
 
     // 使用类型断言明确指定类型
@@ -101,8 +106,8 @@ export class SmsProviderOnbukaService {
     }
 
     return {
-      apiKey: provider.apiKey,
-      apiSecret: provider.apiSecret,
+      apiKey,
+      apiSecret,
       appid: appidValue,
       baseUrl: provider.baseUrl || 'https://api.onbuka.com',
     };
@@ -205,13 +210,8 @@ export class SmsProviderOnbukaService {
     let appid: string;
     let baseUrl: string;
 
-    if (
-      providerConfig &&
-      providerConfig.apiKey &&
-      providerConfig.apiSecret &&
-      providerConfig.configDetails
-    ) {
-      // 如果提供了配置，检查configDetails和appid
+    if (providerConfig && providerConfig.configDetails) {
+      // 如果提供了配置，检查configDetails
       const configDetails = providerConfig.configDetails;
       if (!configDetails || typeof configDetails !== 'object') {
         this.logger.error('Provided Onbuka config details is not an object');
@@ -222,6 +222,23 @@ export class SmsProviderOnbukaService {
             status: 'failed' as SmsStatus,
             errorMessage:
               'SMS provider configuration is invalid: config details must be an object',
+          })),
+        };
+      }
+
+      // 从configDetails获取凭证信息
+      const configApiKey = configDetails.apiKey as string;
+      const configApiSecret = configDetails.apiSecret as string;
+
+      if (!configApiKey || !configApiSecret) {
+        this.logger.error('Provided Onbuka credentials are missing or invalid');
+        return {
+          submitted: [],
+          failed: messages.map((msg) => ({
+            id: msg.id,
+            status: 'failed' as SmsStatus,
+            errorMessage:
+              'SMS provider configuration is invalid: apiKey and apiSecret are required',
           })),
         };
       }
@@ -246,8 +263,8 @@ export class SmsProviderOnbukaService {
       }
 
       // 使用有效的配置
-      apiKey = providerConfig.apiKey;
-      apiSecret = providerConfig.apiSecret;
+      apiKey = configApiKey;
+      apiSecret = configApiSecret;
       appid = appidValue;
       baseUrl = providerConfig.baseUrl || 'https://api.onbuka.com';
     } else {
@@ -397,131 +414,102 @@ export class SmsProviderOnbukaService {
       }
     >
   > {
-    // 获取统一配置
-    let apiKey: string;
-    let apiSecret: string;
-    let appid: string;
-    let baseUrl: string;
-
-    if (
-      providerConfig &&
-      providerConfig.apiKey &&
-      providerConfig.apiSecret &&
-      providerConfig.configDetails
-    ) {
-      // 如果提供了配置，检查configDetails和appid
-      const configDetails = providerConfig.configDetails;
-      if (!configDetails || typeof configDetails !== 'object') {
-        this.logger.error('Provided Onbuka config details is not an object');
-        throw new Error(
-          'SMS provider configuration is invalid: config details must be an object',
-        );
+    try {
+      // 如果没有消息ID，返回空Map
+      if (!providerMsgids || providerMsgids.length === 0) {
+        return new Map();
       }
 
-      // 使用类型断言明确指定类型
-      const appidValue = configDetails.appid as unknown;
-      if (
-        appidValue === undefined ||
-        appidValue === null ||
-        typeof appidValue !== 'string'
-      ) {
-        this.logger.error('Provided Onbuka appid is missing or not a string');
-        throw new Error(
-          'SMS provider configuration is invalid: appid must be a string',
-        );
-      }
+      // 判断认证信息来源
+      let apiKey: string;
+      let apiSecret: string;
+      let baseUrl: string;
 
-      // 使用有效的配置
-      apiKey = providerConfig.apiKey;
-      apiSecret = providerConfig.apiSecret;
-      appid = appidValue;
-      baseUrl = providerConfig.baseUrl || 'https://api.onbuka.com';
-    } else {
-      // 否则获取默认配置
-      try {
+      if (providerConfig && providerConfig.configDetails) {
+        // 从提供的配置中获取认证信息
+        const configDetails = providerConfig.configDetails;
+        if (!configDetails || typeof configDetails !== 'object') {
+          throw new Error('Provided config details is not an object');
+        }
+
+        // 从configDetails获取认证信息
+        apiKey = configDetails.apiKey as string;
+        apiSecret = configDetails.apiSecret as string;
+
+        if (!apiKey || !apiSecret) {
+          throw new Error('API key or secret missing in provided config');
+        }
+
+        baseUrl = providerConfig.baseUrl || 'https://api.onbuka.com';
+      } else {
+        // 从数据库获取配置
         const config = await this.getOnbukaConfig();
         apiKey = config.apiKey;
         apiSecret = config.apiSecret;
-        appid = config.appid;
         baseUrl = config.baseUrl;
-      } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        this.logger.error(
-          `Failed to get Onbuka configuration for status query: ${errorMsg}`,
-        );
-        throw new Error('SMS provider configuration is incomplete');
       }
-    }
 
-    // 更新为v3 API路径
-    const url = `${baseUrl}/v3/getReport`;
-    const headers = this.generateHeaders(apiKey, apiSecret);
+      const headers = this.generateHeaders(apiKey, apiSecret);
+      const trimmedBaseUrl = baseUrl.endsWith('/')
+        ? baseUrl.slice(0, -1)
+        : baseUrl;
+      const url = `${trimmedBaseUrl}/v3/getReport`;
 
-    // 最多每次查询100个msgids
-    const msgidChunks: string[][] = [];
-    for (let i = 0; i < providerMsgids.length; i += 100) {
-      msgidChunks.push(providerMsgids.slice(i, i + 100));
-    }
+      const msgids = providerMsgids.join(',');
 
-    const resultMap = new Map<
-      string,
-      {
-        status: SmsStatus;
-        providerStatusCode: string;
-        providerReportedAt?: Date;
-      }
-    >();
+      const payload = { msgids };
+      this.logger.debug(
+        `Requesting SMS status from Onbuka: ${JSON.stringify({
+          url,
+          payload,
+        })}`,
+      );
 
-    // 分批次查询
-    for (const chunk of msgidChunks) {
-      // 更新为v3 API参数命名
-      const params = {
-        appId: appid,
-        msgids: chunk.join(','),
-      };
+      const response = await firstValueFrom(
+        this.httpService.post<OnbukaReportResponse>(url, payload, {
+          headers,
+        }),
+      );
 
-      try {
-        this.logger.debug(
-          `Querying Onbuka for SMS status: ${JSON.stringify(params)}`,
-        );
-        const response = await firstValueFrom(
-          this.httpService.post<OnbukaReportResponse>(url, params, {
-            headers,
-          }),
-        );
+      this.logger.debug(
+        `Onbuka report response: ${JSON.stringify(response.data)}`,
+      );
 
-        this.logger.debug(
-          `Onbuka report response: ${JSON.stringify(response.data)}`,
-        );
-
-        if (
-          response.data.status === '0' &&
-          response.data.array &&
-          response.data.array.length > 0
-        ) {
-          response.data.array.forEach((item) => {
-            if (item.msgid) {
-              // 将状态代码映射为系统状态
-              const status = this.mapOnbukaStatus(item.status);
-              const reportTime = new Date(item.receiveTime);
-
-              resultMap.set(item.msgid, {
-                status: status,
-                providerStatusCode: item.status,
-                providerReportedAt: reportTime,
-              });
-            }
-          });
+      const resultMap = new Map<
+        string,
+        {
+          status: SmsStatus;
+          providerStatusCode: string;
+          providerReportedAt?: Date;
         }
-      } catch (error: unknown) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        this.logger.error(`Error querying Onbuka SMS status: ${errorMsg}`);
-        // 对于API错误，我们继续处理其他批次
-        continue;
-      }
-    }
+      >();
 
-    return resultMap;
+      if (
+        response.data.status === '0' &&
+        response.data.array &&
+        response.data.array.length > 0
+      ) {
+        response.data.array.forEach((item) => {
+          if (item.msgid) {
+            // 将状态代码映射为系统状态
+            const status = this.mapOnbukaStatus(item.status);
+            const reportTime = new Date(item.receiveTime);
+
+            resultMap.set(item.msgid, {
+              status: status,
+              providerStatusCode: item.status,
+              providerReportedAt: reportTime,
+            });
+          }
+        });
+      }
+
+      return resultMap;
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Error querying Onbuka SMS status: ${errorMsg}`);
+      return new Map();
+    }
   }
 
   // --- 辅助方法 ---

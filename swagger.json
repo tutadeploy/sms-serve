@@ -1,0 +1,5852 @@
+
+window.onload = function() {
+  // Build a system
+  let url = window.location.search.match(/url=([^&]+)/);
+  if (url && url.length > 1) {
+    url = decodeURIComponent(url[1]);
+  } else {
+    url = window.location.origin;
+  }
+  let options = {
+  "swaggerDoc": {
+    "openapi": "3.0.0",
+    "paths": {
+      "/v1": {
+        "get": {
+          "operationId": "AppController_getHello",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          },
+          "tags": [
+            "App"
+          ]
+        }
+      },
+      "/v1/system/users": {
+        "post": {
+          "operationId": "UserController_create",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateUserDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UserResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "创建用户",
+          "tags": [
+            "用户管理"
+          ]
+        },
+        "get": {
+          "operationId": "UserController_findAll",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/UserResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "获取用户列表",
+          "tags": [
+            "用户管理"
+          ]
+        }
+      },
+      "/v1/system/users/{id}": {
+        "get": {
+          "operationId": "UserController_findOne",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UserResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "获取用户详情",
+          "tags": [
+            "用户管理"
+          ]
+        }
+      },
+      "/v1/system/users/package-form-code/{userId}": {
+        "get": {
+          "operationId": "UserController_getPackageFormCode",
+          "parameters": [
+            {
+              "name": "userId",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "获取成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "message": {
+                        "type": "string",
+                        "example": "success"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string",
+                            "example": "96809115"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "获取用户的包裹表单识别码",
+          "tags": [
+            "用户管理"
+          ]
+        }
+      },
+      "/v1/system/users/by-form-code/{code}": {
+        "get": {
+          "operationId": "UserController_findByPackageFormCode",
+          "parameters": [
+            {
+              "name": "code",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UserResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "通过识别码查找用户",
+          "tags": [
+            "用户管理"
+          ]
+        }
+      },
+      "/v1/system/users/update": {
+        "put": {
+          "operationId": "UserController_update",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "query",
+              "description": "用户ID",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateUserDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "更新成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UserResponseDto"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "请求参数错误"
+            },
+            "404": {
+              "description": "用户不存在"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "更新用户信息",
+          "tags": [
+            "用户管理"
+          ]
+        }
+      },
+      "/v1/system/users/delete": {
+        "delete": {
+          "operationId": "UserController_remove",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "query",
+              "description": "用户ID",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "删除成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {}
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "用户不存在"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "删除用户",
+          "tags": [
+            "用户管理"
+          ]
+        }
+      },
+      "/v1/system/users/page": {
+        "get": {
+          "operationId": "UserController_findPage",
+          "parameters": [
+            {
+              "name": "pageNo",
+              "required": false,
+              "in": "query",
+              "description": "当前页码",
+              "schema": {
+                "default": 1,
+                "example": 1,
+                "type": "number"
+              }
+            },
+            {
+              "name": "pageSize",
+              "required": false,
+              "in": "query",
+              "description": "每页数量",
+              "schema": {
+                "default": 10,
+                "example": 10,
+                "type": "number"
+              }
+            },
+            {
+              "name": "username",
+              "required": false,
+              "in": "query",
+              "description": "用户名",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "phone",
+              "required": false,
+              "in": "query",
+              "description": "手机号",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "email",
+              "required": false,
+              "in": "query",
+              "description": "邮箱",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "status",
+              "required": false,
+              "in": "query",
+              "description": "状态：0-禁用，1-启用",
+              "schema": {
+                "type": "number",
+                "enum": [
+                  1,
+                  0
+                ]
+              }
+            },
+            {
+              "name": "tenantId",
+              "required": false,
+              "in": "query",
+              "description": "租户ID",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "查询成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UserListPageDto"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "分页查询用户列表",
+          "tags": [
+            "用户管理"
+          ]
+        }
+      },
+      "/v1/system/users/list-by-tenant": {
+        "get": {
+          "operationId": "UserController_findByTenantName",
+          "parameters": [
+            {
+              "name": "tenantName",
+              "required": true,
+              "in": "query",
+              "description": "租户名称",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "查询成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/UserResponseDto"
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "租户不存在"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "通过租户名查询用户列表 (兼容旧接口)",
+          "tags": [
+            "用户管理"
+          ]
+        }
+      },
+      "/v1/system/user/profile/get": {
+        "get": {
+          "operationId": "UserProfileController_getProfile",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "获取成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number"
+                          },
+                          "username": {
+                            "type": "string"
+                          },
+                          "nickname": {
+                            "type": "string"
+                          },
+                          "roles": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "number"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          },
+                          "email": {
+                            "type": "string"
+                          },
+                          "mobile": {
+                            "type": "string"
+                          },
+                          "sex": {
+                            "type": "number"
+                          },
+                          "avatar": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "number"
+                          },
+                          "remark": {
+                            "type": "string"
+                          },
+                          "loginIp": {
+                            "type": "string"
+                          },
+                          "loginDate": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "createTime": {
+                            "type": "string",
+                            "format": "date-time"
+                          }
+                        }
+                      },
+                      "msg": {
+                        "type": "string",
+                        "example": "获取成功"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "获取个人信息",
+          "tags": [
+            "用户：个人信息"
+          ]
+        }
+      },
+      "/v1/system/tenant/create": {
+        "post": {
+          "operationId": "TenantController_create",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTenantDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "租户创建成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/TenantResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "创建租户",
+          "tags": [
+            "租户管理"
+          ]
+        }
+      },
+      "/v1/system/tenant/list": {
+        "get": {
+          "operationId": "TenantController_findAll",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "获取租户列表成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/TenantResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "获取所有租户 (建议使用分页)",
+          "tags": [
+            "租户管理"
+          ]
+        }
+      },
+      "/v1/system/tenant/get": {
+        "get": {
+          "operationId": "TenantController_findOne",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "query",
+              "description": "租户ID",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "获取租户信息成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/TenantResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "根据ID查询租户",
+          "tags": [
+            "租户管理"
+          ]
+        }
+      },
+      "/v1/system/tenant/update": {
+        "put": {
+          "operationId": "TenantController_update",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "query",
+              "description": "租户ID",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTenantDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "更新租户信息成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/TenantResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "更新租户信息",
+          "tags": [
+            "租户管理"
+          ]
+        }
+      },
+      "/v1/system/tenant/delete": {
+        "delete": {
+          "operationId": "TenantController_remove",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "query",
+              "description": "租户ID",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "删除租户成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {}
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "删除租户",
+          "tags": [
+            "租户管理"
+          ]
+        }
+      },
+      "/v1/system/tenant/get-id-by-name": {
+        "get": {
+          "operationId": "TenantController_getIdByName",
+          "parameters": [
+            {
+              "name": "name",
+              "required": true,
+              "in": "query",
+              "description": "租户名称",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "租户ID",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "number"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "根据租户名称获取租户ID",
+          "tags": [
+            "租户管理"
+          ]
+        }
+      },
+      "/v1/system/tenant/get-by-website": {
+        "get": {
+          "operationId": "TenantController_getByWebsite",
+          "parameters": [
+            {
+              "name": "website",
+              "required": true,
+              "in": "query",
+              "description": "网站地址",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "获取租户信息成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/TenantResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "根据网站地址获取租户",
+          "tags": [
+            "租户管理"
+          ]
+        }
+      },
+      "/v1/system/auth/login": {
+        "post": {
+          "description": "\n      通过用户名/邮箱和密码进行登录认证。\n      \n      特性：\n      - 支持用户名或邮箱登录\n      - 支持租户隔离，可选择性传入租户名称\n      - 支持验证码校验（可选）\n      - 支持\"记住我\"功能，延长令牌有效期\n      - 支持多端登录，通过 clientId 区分\n\n      返回：\n      - accessToken: 访问令牌，用于后续接口调用的认证\n      - refreshToken: 刷新令牌，用于在访问令牌过期时获取新的访问令牌\n      - expiresTime: 访问令牌的过期时间戳\n\n      测试示例：\n      1. 使用用户名登录：\n      ```bash\n      curl -X POST http://localhost:3000/v1/system/auth/login \\\n        -H \"Content-Type: application/json\" \\\n        -d '{\n          \"username\": \"admin\",\n          \"password\": \"admin123\",\n          \"rememberMe\": true\n        }'\n      ```\n\n      2. 使用邮箱登录：\n      ```bash\n      curl -X POST http://localhost:3000/v1/system/auth/login \\\n        -H \"Content-Type: application/json\" \\\n        -d '{\n          \"email\": \"admin@example.com\",\n          \"password\": \"admin123\",\n          \"rememberMe\": false\n        }'\n      ```\n\n      3. 带验证码登录：\n      ```bash\n      curl -X POST http://localhost:3000/v1/system/auth/login \\\n        -H \"Content-Type: application/json\" \\\n        -d '{\n          \"username\": \"admin\",\n          \"password\": \"admin123\",\n          \"captcha\": \"1234\",\n          \"captchaId\": \"abc-123\"\n        }'\n      ```\n\n      4. 带租户ID登录：\n      ```bash\n      curl -X POST http://localhost:3000/v1/system/auth/login \\\n        -H \"Content-Type: application/json\" \\\n        -H \"tenant-id: 1\" \\\n        -d '{\n          \"username\": \"admin\",\n          \"password\": \"admin123\"\n        }'\n      ```\n    ",
+          "operationId": "AuthController_login",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginUserDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "登录成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/LoginResponseDto"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "请求参数错误",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ApiErrorResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "认证失败",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ApiErrorResponse"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "用户登录",
+          "tags": [
+            "认证管理"
+          ]
+        }
+      },
+      "/v1/system/auth/refresh-token": {
+        "post": {
+          "description": "\n      使用刷新令牌获取新的访问令牌。\n      \n      使用场景：\n      - 当访问令牌过期时，使用刷新令牌获取新的访问令牌，避免用户重新登录\n      - 支持传入会话ID，用于多端登录场景下的令牌刷新\n      - 支持\"记住我\"状态的延续\n\n      注意事项：\n      - 刷新令牌只能使用一次，使用后会自动失效\n      - 如果刷新令牌已过期，需要重新登录\n      - 如果用户已被禁用，刷新操作将失败\n\n      测试示例：\n      1. 刷新令牌：\n      ```bash\n      curl -X POST http://localhost:3000/v1/system/auth/refresh-token \\\n        -H \"Content-Type: application/json\" \\\n        -d '{\n          \"refreshToken\": \"eyJhbGciOiJIUzI1NiIs...\"\n        }'\n      ```\n\n      2. 带会话ID刷新令牌：\n      ```bash\n      curl -X POST http://localhost:3000/v1/system/auth/refresh-token \\\n        -H \"Content-Type: application/json\" \\\n        -d '{\n          \"refreshToken\": \"eyJhbGciOiJIUzI1NiIs...\",\n          \"sessionId\": \"session-123\"\n        }'\n      ```\n    ",
+          "operationId": "AuthController_refreshToken",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshTokenDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "刷新成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/LoginResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "刷新令牌无效或已过期",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ApiErrorResponse"
+                  }
+                }
+              }
+            }
+          },
+          "summary": "刷新访问令牌",
+          "tags": [
+            "认证管理"
+          ]
+        }
+      },
+      "/v1/system/auth/logout": {
+        "post": {
+          "operationId": "AuthController_logout",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "退出成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "data": {
+                        "type": "boolean",
+                        "example": true
+                      },
+                      "msg": {
+                        "type": "string",
+                        "example": "退出成功"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "用户退出",
+          "tags": [
+            "认证管理"
+          ]
+        }
+      },
+      "/v1/system/auth/get-permission-info": {
+        "get": {
+          "description": "\n      获取当前登录用户的详细信息、角色和权限列表。\n      \n      返回信息包括：\n      - 用户基本信息（ID、用户名、昵称等）\n      - 用户角色列表\n      - 用户权限列表\n      \n      注意：\n      - 需要在请求头中携带有效的访问令牌\n      - 可选择性传入租户ID，用于多租户场景\n    ",
+          "operationId": "AuthController_getPermissionInfo",
+          "parameters": [
+            {
+              "name": "tenant-id",
+              "required": false,
+              "in": "header",
+              "description": "租户ID",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "获取成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PermissionInfoResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ApiErrorResponse"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "获取用户权限信息",
+          "tags": [
+            "认证管理"
+          ]
+        }
+      },
+      "/v1/system/auth/get-profile": {
+        "get": {
+          "description": "\n      获取当前登录用户的基本信息。\n      \n      返回信息：\n      - 用户ID\n      - 用户名\n      - 角色列表\n      - 所属租户ID（如果有）\n      \n      使用场景：\n      - 用户登录后获取个人信息\n      - 用于前端展示当前用户信息\n      - 用于权限判断和界面展示控制\n\n      测试示例：\n      1. 获取用户信息：\n      ```bash\n      curl -X GET http://localhost:3000/v1/system/auth/get-profile \\\n        -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIs...\"\n      ```\n\n      2. 带租户ID获取用户信息：\n      ```bash\n      curl -X GET http://localhost:3000/v1/system/auth/get-profile \\\n        -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIs...\" \\\n        -H \"tenant-id: 1\"\n      ```\n    ",
+          "operationId": "AuthController_getProfile",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "返回当前用户信息",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/UserProfileResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未认证或令牌已过期",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ApiErrorResponse"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "JWT-auth": []
+            }
+          ],
+          "summary": "获取当前用户信息",
+          "tags": [
+            "认证管理"
+          ]
+        }
+      },
+      "/v1/system/sso/sessions": {
+        "get": {
+          "operationId": "SsoController_getUserSessions",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "获取当前用户的活跃会话列表",
+          "tags": [
+            "单点登录"
+          ]
+        },
+        "delete": {
+          "operationId": "SsoController_invalidateAllSessions",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "注销当前用户的所有会话(除当前会话)",
+          "tags": [
+            "单点登录"
+          ]
+        }
+      },
+      "/v1/system/sso/sessions/{sessionId}/extend": {
+        "post": {
+          "operationId": "SsoController_extendSession",
+          "parameters": [
+            {
+              "name": "sessionId",
+              "required": true,
+              "in": "path",
+              "description": "会话ID",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "201": {
+              "description": ""
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "延长会话有效期",
+          "tags": [
+            "单点登录"
+          ]
+        }
+      },
+      "/v1/system/sso/sessions/{sessionId}": {
+        "delete": {
+          "operationId": "SsoController_invalidateSession",
+          "parameters": [
+            {
+              "name": "sessionId",
+              "required": true,
+              "in": "path",
+              "description": "会话ID",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "注销指定会话",
+          "tags": [
+            "单点登录"
+          ]
+        }
+      },
+      "/v1/template/sms/create": {
+        "post": {
+          "operationId": "TemplateController_createSmsTemplate",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSmsTemplateDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "模板创建成功.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SmsTemplateResponseDto"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "参数错误."
+            },
+            "401": {
+              "description": "未授权."
+            },
+            "403": {
+              "description": "模板数量超出限制."
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "创建短信模板",
+          "tags": [
+            "模板管理"
+          ]
+        }
+      },
+      "/v1/template/sms/page": {
+        "get": {
+          "operationId": "TemplateController_getSmsTemplatePage",
+          "parameters": [
+            {
+              "name": "pageNo",
+              "required": false,
+              "in": "query",
+              "description": "页码 (默认1)",
+              "schema": {
+                "minimum": 1,
+                "example": 1,
+                "type": "number"
+              }
+            },
+            {
+              "name": "pageSize",
+              "required": false,
+              "in": "query",
+              "description": "每页条数 (默认10)",
+              "schema": {
+                "minimum": 1,
+                "example": 10,
+                "type": "number"
+              }
+            },
+            {
+              "name": "name",
+              "required": false,
+              "in": "query",
+              "description": "模板名称 (模糊查询)",
+              "schema": {
+                "example": "验证码",
+                "type": "string"
+              }
+            },
+            {
+              "name": "content",
+              "required": false,
+              "in": "query",
+              "description": "模板内容 (模糊查询)",
+              "schema": {
+                "example": "验证码",
+                "type": "string"
+              }
+            },
+            {
+              "name": "createStartTime",
+              "required": false,
+              "in": "query",
+              "description": "创建开始时间",
+              "schema": {
+                "example": "2023-01-01T00:00:00Z",
+                "type": "string"
+              }
+            },
+            {
+              "name": "createEndTime",
+              "required": false,
+              "in": "query",
+              "description": "创建结束时间",
+              "schema": {
+                "example": "2023-12-31T23:59:59Z",
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "成功获取模板分页列表.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SmsTemplatePageDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权."
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "分页获取当前租户的短信模板",
+          "tags": [
+            "模板管理"
+          ]
+        }
+      },
+      "/v1/template/sms/list": {
+        "get": {
+          "operationId": "TemplateController_findAllSmsTemplates",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "查询成功.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/SmsTemplateResponseDto"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权."
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "查询当前租户的所有短信模板",
+          "tags": [
+            "模板管理"
+          ]
+        }
+      },
+      "/v1/template/sms/get": {
+        "get": {
+          "operationId": "TemplateController_findOneSmsTemplate",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "query",
+              "description": "短信模板 ID",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "成功获取模板详情.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SmsTemplateResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权."
+            },
+            "404": {
+              "description": "模板未找到或不属于该租户."
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "获取单个短信模板详情",
+          "tags": [
+            "模板管理"
+          ]
+        }
+      },
+      "/v1/template/sms/update": {
+        "put": {
+          "operationId": "TemplateController_updateSmsTemplate",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "query",
+              "description": "短信模板 ID",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateSmsTemplateDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "模板更新成功.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SmsTemplateResponseDto"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "参数错误."
+            },
+            "401": {
+              "description": "未授权."
+            },
+            "404": {
+              "description": "模板未找到或不属于该租户."
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "更新短信模板",
+          "tags": [
+            "模板管理"
+          ]
+        }
+      },
+      "/v1/template/sms/delete": {
+        "delete": {
+          "operationId": "TemplateController_removeSmsTemplate",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "query",
+              "description": "短信模板 ID",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "删除成功.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {}
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权."
+            },
+            "404": {
+              "description": "模板不存在或不属于该租户."
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "删除短信模板",
+          "tags": [
+            "模板管理"
+          ]
+        }
+      },
+      "/v1/template/email/create": {
+        "post": {
+          "operationId": "TemplateController_createEmailTemplate",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateEmailTemplateDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "模板创建成功.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/EmailTemplateResponseDto"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "参数错误."
+            },
+            "401": {
+              "description": "未授权."
+            },
+            "403": {
+              "description": "模板数量超出限制."
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "创建邮件模板",
+          "tags": [
+            "模板管理"
+          ]
+        }
+      },
+      "/v1/template/email/page": {
+        "get": {
+          "operationId": "TemplateController_getEmailTemplatePage",
+          "parameters": [
+            {
+              "name": "pageNo",
+              "required": false,
+              "in": "query",
+              "description": "页码 (默认1)",
+              "schema": {
+                "minimum": 1,
+                "example": 1,
+                "type": "number"
+              }
+            },
+            {
+              "name": "pageSize",
+              "required": false,
+              "in": "query",
+              "description": "每页条数 (默认10)",
+              "schema": {
+                "minimum": 1,
+                "example": 10,
+                "type": "number"
+              }
+            },
+            {
+              "name": "name",
+              "required": false,
+              "in": "query",
+              "description": "模板名称 (模糊查询)",
+              "schema": {
+                "example": "欢迎",
+                "type": "string"
+              }
+            },
+            {
+              "name": "subject",
+              "required": false,
+              "in": "query",
+              "description": "邮件主题 (模糊查询)",
+              "schema": {
+                "example": "服务",
+                "type": "string"
+              }
+            },
+            {
+              "name": "createStartTime",
+              "required": false,
+              "in": "query",
+              "description": "创建开始时间",
+              "schema": {
+                "example": "2023-01-01T00:00:00Z",
+                "type": "string"
+              }
+            },
+            {
+              "name": "createEndTime",
+              "required": false,
+              "in": "query",
+              "description": "创建结束时间",
+              "schema": {
+                "example": "2023-12-31T23:59:59Z",
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "成功获取模板分页列表.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/EmailTemplatePageDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权."
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "分页获取当前租户的邮件模板",
+          "tags": [
+            "模板管理"
+          ]
+        }
+      },
+      "/v1/template/email/list": {
+        "get": {
+          "operationId": "TemplateController_findAllEmailTemplates",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "查询成功.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/EmailTemplateResponseDto"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权."
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "查询当前租户的所有邮件模板",
+          "tags": [
+            "模板管理"
+          ]
+        }
+      },
+      "/v1/template/email/get": {
+        "get": {
+          "operationId": "TemplateController_findOneEmailTemplate",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "query",
+              "description": "邮件模板 ID",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "成功获取模板详情.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/EmailTemplateResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权."
+            },
+            "404": {
+              "description": "模板未找到或不属于该租户."
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "获取单个邮件模板详情",
+          "tags": [
+            "模板管理"
+          ]
+        }
+      },
+      "/v1/template/email/update": {
+        "put": {
+          "operationId": "TemplateController_updateEmailTemplate",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "query",
+              "description": "邮件模板 ID",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateEmailTemplateDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "更新成功.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/EmailTemplateResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权."
+            },
+            "404": {
+              "description": "模板未找到或不属于该租户."
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "更新邮件模板",
+          "tags": [
+            "模板管理"
+          ]
+        }
+      },
+      "/v1/template/email/delete": {
+        "delete": {
+          "operationId": "TemplateController_removeEmailTemplate",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "query",
+              "description": "邮件模板 ID",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "模板删除成功.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {}
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权."
+            },
+            "404": {
+              "description": "模板未找到或不属于该租户."
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "删除邮件模板",
+          "tags": [
+            "模板管理"
+          ]
+        }
+      },
+      "/v1/sms-provider": {
+        "post": {
+          "operationId": "SmsProviderController_createProvider",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSmsProviderDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "供应商配置已创建"
+            },
+            "400": {
+              "description": "参数错误或验证失败"
+            },
+            "401": {
+              "description": "未授权"
+            }
+          },
+          "summary": "创建新的短信供应商配置",
+          "tags": [
+            "sms-provider"
+          ]
+        },
+        "get": {
+          "operationId": "SmsProviderController_findAll",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": "获取成功"
+            }
+          },
+          "summary": "获取所有短信供应商配置",
+          "tags": [
+            "sms-provider"
+          ]
+        }
+      },
+      "/v1/sms-provider/by-tenant/{tenantId}": {
+        "get": {
+          "operationId": "SmsProviderController_getProvidersByTenant",
+          "parameters": [
+            {
+              "name": "tenantId",
+              "required": true,
+              "in": "path",
+              "description": "租户ID",
+              "schema": {
+                "type": "number"
+              }
+            },
+            {
+              "name": "onlyActive",
+              "required": true,
+              "in": "query",
+              "schema": {
+                "type": "boolean"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "获取成功"
+            }
+          },
+          "summary": "获取租户的短信供应商配置列表",
+          "tags": [
+            "sms-provider"
+          ]
+        }
+      },
+      "/v1/sms-provider/{id}": {
+        "get": {
+          "operationId": "SmsProviderController_findOne",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "获取成功"
+            },
+            "404": {
+              "description": "供应商不存在"
+            }
+          },
+          "summary": "获取单个短信供应商配置",
+          "tags": [
+            "sms-provider"
+          ]
+        },
+        "patch": {
+          "operationId": "SmsProviderController_updateProvider",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateSmsProviderDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "供应商配置已更新"
+            },
+            "400": {
+              "description": "参数错误或验证失败"
+            },
+            "404": {
+              "description": "供应商不存在"
+            }
+          },
+          "summary": "更新短信供应商配置",
+          "tags": [
+            "sms-provider"
+          ]
+        }
+      },
+      "/v1/webhooks/onbuka/callback/mo": {
+        "post": {
+          "operationId": "SmsProviderOnbukaController_handleMoCallback",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          },
+          "tags": [
+            "SmsProviderOnbuka"
+          ]
+        }
+      },
+      "/v1/webhooks/onbuka/callback/report": {
+        "post": {
+          "operationId": "SmsProviderOnbukaController_handleStatusReportCallback",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          },
+          "tags": [
+            "SmsProviderOnbuka"
+          ]
+        }
+      },
+      "/v1/notification/sms": {
+        "post": {
+          "description": "\n    使用预定义的模板发送短信。\n    - 支持单个或多个手机号\n    - 支持模板变量替换\n    - 支持定时发送（可选）\n    - 返回批次ID用于后续查询发送状态\n    ",
+          "operationId": "NotificationController_sendSms",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendSmsDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "短信发送请求已接受",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": {
+                      "batchId": "SMS_BATCH_20230801123456",
+                      "success": true,
+                      "message": "短信发送请求已接受",
+                      "failedNumbers": []
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "参数错误"
+            },
+            "401": {
+              "description": "未授权"
+            },
+            "404": {
+              "description": "模板不存在"
+            },
+            "429": {
+              "description": "发送频率超限"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "发送短信",
+          "tags": [
+            "notification"
+          ]
+        }
+      },
+      "/v1/notification/email": {
+        "post": {
+          "description": "创建一个邮件发送批次，并将邮件添加到队列中进行异步处理。支持单条或批量发送。",
+          "operationId": "NotificationController_sendEmail",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendEmailDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "邮件发送任务已创建"
+            },
+            "400": {
+              "description": "请求参数错误，例如邮箱格式无效或缺少必要参数"
+            },
+            "401": {
+              "description": "未授权，需要有效的JWT令牌"
+            },
+            "404": {
+              "description": "模板未找到，请检查templateId"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "发送邮件通知",
+          "tags": [
+            "notification"
+          ]
+        }
+      },
+      "/v1/notification/sms/batches": {
+        "get": {
+          "description": "获取当前用户的短信发送批次列表，支持分页、状态筛选和时间范围筛选",
+          "operationId": "NotificationController_getSmsBatches",
+          "parameters": [
+            {
+              "name": "status",
+              "required": false,
+              "in": "query",
+              "description": "批次状态 (可选)",
+              "schema": {
+                "example": "completed",
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "processing",
+                  "completed",
+                  "failed",
+                  "cancelled"
+                ]
+              }
+            },
+            {
+              "name": "pageNo",
+              "required": false,
+              "in": "query",
+              "description": "页码 (默认1)",
+              "schema": {
+                "minimum": 1,
+                "example": 1,
+                "type": "number"
+              }
+            },
+            {
+              "name": "pageSize",
+              "required": false,
+              "in": "query",
+              "description": "每页条数 (默认10)",
+              "schema": {
+                "minimum": 1,
+                "example": 10,
+                "type": "number"
+              }
+            },
+            {
+              "name": "createStartTime",
+              "required": false,
+              "in": "query",
+              "description": "创建开始时间 (ISO 8601 格式)",
+              "schema": {
+                "example": "2023-01-01T00:00:00Z",
+                "type": "string"
+              }
+            },
+            {
+              "name": "createEndTime",
+              "required": false,
+              "in": "query",
+              "description": "创建结束时间 (ISO 8601 格式)",
+              "schema": {
+                "example": "2023-12-31T23:59:59Z",
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "短信批次列表",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "list": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/SmsBatchItemDto"
+                        }
+                      },
+                      "total": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "获取短信批次列表",
+          "tags": [
+            "notification"
+          ]
+        }
+      },
+      "/v1/notification/sms/batches/{id}": {
+        "get": {
+          "description": "获取指定批次ID的详细信息，包括批次状态和消息列表",
+          "operationId": "NotificationController_getSmsBatchDetail",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "短信批次详情",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SmsBatchDetailDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权"
+            },
+            "404": {
+              "description": "批次不存在"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "获取短信批次详情",
+          "tags": [
+            "notification"
+          ]
+        }
+      },
+      "/v1/notification/sms/batches/{id}/refresh": {
+        "post": {
+          "description": "从服务提供商获取最新的短信状态信息并更新批次状态",
+          "operationId": "NotificationController_refreshBatchStatus",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "短信批次详情",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SmsBatchDetailDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权"
+            },
+            "404": {
+              "description": "批次不存在"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "刷新短信批次状态",
+          "tags": [
+            "notification"
+          ]
+        }
+      },
+      "/v1/api/channels/update": {
+        "put": {
+          "operationId": "SmsChannelConfigController_setChannel",
+          "parameters": [
+            {
+              "name": "tenantId",
+              "required": true,
+              "in": "query",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetChannelDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "message": {
+                        "type": "string",
+                        "example": "设置成功"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number",
+                            "example": 1
+                          },
+                          "channel": {
+                            "type": "string",
+                            "example": "buka"
+                          },
+                          "isActive": {
+                            "type": "boolean",
+                            "example": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "summary": "设置租户的渠道配置",
+          "tags": [
+            "渠道配置"
+          ]
+        }
+      },
+      "/v1/api/channels/buka/user-config": {
+        "post": {
+          "operationId": "SmsChannelConfigController_setBukaUserConfig",
+          "parameters": [
+            {
+              "name": "tenantId",
+              "required": true,
+              "in": "query",
+              "schema": {
+                "type": "number"
+              }
+            },
+            {
+              "name": "userId",
+              "required": true,
+              "in": "query",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetBukaUserConfigDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "message": {
+                        "type": "string",
+                        "example": "设置成功"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number",
+                            "example": 1
+                          },
+                          "appId": {
+                            "type": "string",
+                            "example": "123456"
+                          },
+                          "isActive": {
+                            "type": "boolean",
+                            "example": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "summary": "设置用户的Buka渠道配置",
+          "tags": [
+            "渠道配置"
+          ]
+        }
+      },
+      "/v1/api/channels/supported-countries/list": {
+        "get": {
+          "operationId": "SmsChannelConfigController_getSupportedCountries",
+          "parameters": [
+            {
+              "name": "channel",
+              "required": true,
+              "in": "query",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "查询成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "example": [
+                      {
+                        "code": "JP",
+                        "dialCode": "+81",
+                        "name": "Japan"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "渠道不支持或不存在"
+            }
+          },
+          "summary": "获取渠道支持的国家列表",
+          "tags": [
+            "渠道配置"
+          ]
+        }
+      },
+      "/v1/api/channels/buka/balance": {
+        "get": {
+          "operationId": "SmsChannelConfigController_getBukaBalance",
+          "parameters": [
+            {
+              "name": "tenantId",
+              "required": true,
+              "in": "query",
+              "schema": {
+                "type": "number"
+              }
+            },
+            {
+              "name": "userId",
+              "required": true,
+              "in": "query",
+              "schema": {
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/BukaBalanceResponseDto"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "获取余额失败（例如，API错误或配置问题）",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "statusCode": {
+                        "type": "number",
+                        "example": 500
+                      },
+                      "message": {
+                        "type": "string",
+                        "example": "Buka API error: ..."
+                      },
+                      "timestamp": {
+                        "type": "string",
+                        "example": "2025-04-08T18:11:04.900Z"
+                      },
+                      "path": {
+                        "type": "string",
+                        "example": "/v1/api/channels/buka/balance"
+                      },
+                      "method": {
+                        "type": "string",
+                        "example": "GET"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "summary": "获取 Buka 账户余额",
+          "tags": [
+            "渠道配置"
+          ]
+        }
+      },
+      "/v1/status/sms/messages": {
+        "get": {
+          "description": "支持按接收人、状态和批次ID过滤，返回满足条件的短信记录",
+          "operationId": "StatusController_getAllSmsMessages",
+          "parameters": [
+            {
+              "name": "pageNo",
+              "required": true,
+              "in": "query",
+              "description": "页码，从1开始",
+              "schema": {
+                "minimum": 1,
+                "default": 1,
+                "example": 1,
+                "type": "number"
+              }
+            },
+            {
+              "name": "limit",
+              "required": true,
+              "in": "query",
+              "description": "每页数量，默认为20，最大为100",
+              "schema": {
+                "minimum": 1,
+                "maximum": 100,
+                "default": 20,
+                "example": 20,
+                "type": "number"
+              }
+            },
+            {
+              "name": "recipientNumber",
+              "required": false,
+              "in": "query",
+              "description": "接收人手机号 (模糊查询)",
+              "schema": {
+                "example": "1380",
+                "type": "string"
+              }
+            },
+            {
+              "name": "status",
+              "required": false,
+              "in": "query",
+              "description": "状态",
+              "schema": {
+                "example": "delivered",
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "sent",
+                  "delivered",
+                  "failed"
+                ]
+              }
+            },
+            {
+              "name": "batchId",
+              "required": false,
+              "in": "query",
+              "description": "批次ID",
+              "schema": {
+                "example": 1,
+                "type": "number"
+              }
+            },
+            {
+              "name": "tenantId",
+              "required": false,
+              "in": "query",
+              "description": "租户ID (仅管理员可用)",
+              "schema": {
+                "example": 1,
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "成功获取短信记录",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PaginatedResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "分页查询短信发送记录",
+          "tags": [
+            "status"
+          ]
+        }
+      },
+      "/v1/status/sms/received": {
+        "get": {
+          "description": "支持按发送人、接收人和内容过滤，返回满足条件的接收记录",
+          "operationId": "StatusController_getSmsReceivedMessages",
+          "parameters": [
+            {
+              "name": "pageNo",
+              "required": true,
+              "in": "query",
+              "description": "页码，从1开始",
+              "schema": {
+                "minimum": 1,
+                "default": 1,
+                "example": 1,
+                "type": "number"
+              }
+            },
+            {
+              "name": "limit",
+              "required": true,
+              "in": "query",
+              "description": "每页数量，默认为20，最大为100",
+              "schema": {
+                "minimum": 1,
+                "maximum": 100,
+                "default": 20,
+                "example": 20,
+                "type": "number"
+              }
+            },
+            {
+              "name": "tenantId",
+              "required": false,
+              "in": "query",
+              "description": "租户ID（仅管理员可用）",
+              "schema": {
+                "example": 1,
+                "type": "number"
+              }
+            },
+            {
+              "name": "senderNumber",
+              "required": false,
+              "in": "query",
+              "description": "发送方手机号 (模糊查询)",
+              "schema": {
+                "example": "1380",
+                "type": "string"
+              }
+            },
+            {
+              "name": "recipientNumber",
+              "required": false,
+              "in": "query",
+              "description": "接收方手机号 (模糊查询)",
+              "schema": {
+                "example": "1390",
+                "type": "string"
+              }
+            },
+            {
+              "name": "content",
+              "required": false,
+              "in": "query",
+              "description": "消息内容 (模糊查询)",
+              "schema": {
+                "example": "验证码",
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "成功获取短信接收记录",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PaginatedResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "分页查询短信接收记录",
+          "tags": [
+            "status"
+          ]
+        }
+      },
+      "/v1/status/sms/batch/{batchId}": {
+        "get": {
+          "description": "返回指定批次的详细信息，包括批次状态、成功/失败数量以及所有短信的状态",
+          "operationId": "StatusController_getSmsBatchStatus",
+          "parameters": [
+            {
+              "name": "batchId",
+              "required": true,
+              "in": "path",
+              "description": "短信批次 ID",
+              "schema": {
+                "example": 123,
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "成功获取批次状态",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SmsBatchResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权"
+            },
+            "403": {
+              "description": "没有权限访问该批次"
+            },
+            "404": {
+              "description": "批次未找到"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "获取指定短信发送批次的状态",
+          "tags": [
+            "status"
+          ]
+        }
+      },
+      "/v1/status/sms/message/{messageId}": {
+        "get": {
+          "description": "返回单条短信的详细信息，包括发送状态、接收者和内容",
+          "operationId": "StatusController_getSmsMessageStatus",
+          "parameters": [
+            {
+              "name": "messageId",
+              "required": true,
+              "in": "path",
+              "description": "短信消息 ID",
+              "schema": {
+                "example": 456,
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "成功获取消息状态",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SmsMessageResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权"
+            },
+            "403": {
+              "description": "没有权限访问该消息"
+            },
+            "404": {
+              "description": "消息未找到"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "获取指定单条短信的状态",
+          "tags": [
+            "status"
+          ]
+        }
+      },
+      "/v1/status/sms/batch/{batchId}/messages": {
+        "get": {
+          "description": "支持分页和过滤条件，返回批次中的短信消息列表",
+          "operationId": "StatusController_getSmsBatchMessages",
+          "parameters": [
+            {
+              "name": "batchId",
+              "required": true,
+              "in": "path",
+              "description": "短信批次 ID",
+              "schema": {
+                "type": "number"
+              }
+            },
+            {
+              "name": "pageNo",
+              "required": true,
+              "in": "query",
+              "description": "页码，从1开始",
+              "schema": {
+                "minimum": 1,
+                "default": 1,
+                "example": 1,
+                "type": "number"
+              }
+            },
+            {
+              "name": "limit",
+              "required": true,
+              "in": "query",
+              "description": "每页数量，默认为20，最大为100",
+              "schema": {
+                "minimum": 1,
+                "maximum": 100,
+                "default": 20,
+                "example": 20,
+                "type": "number"
+              }
+            },
+            {
+              "name": "status",
+              "required": false,
+              "in": "query",
+              "description": "根据消息状态过滤",
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "queued",
+                  "submitted",
+                  "sent",
+                  "delivered",
+                  "failed",
+                  "rejected",
+                  "unknown",
+                  "sending"
+                ]
+              }
+            },
+            {
+              "name": "recipient",
+              "required": false,
+              "in": "query",
+              "description": "接收者号码（支持模糊搜索）",
+              "schema": {
+                "example": "138",
+                "type": "string"
+              }
+            },
+            {
+              "name": "sortBy",
+              "required": false,
+              "in": "query",
+              "description": "排序字段",
+              "schema": {
+                "default": "id",
+                "type": "string",
+                "enum": [
+                  "id",
+                  "status",
+                  "createTime",
+                  "sendTime"
+                ]
+              }
+            },
+            {
+              "name": "sortOrder",
+              "required": false,
+              "in": "query",
+              "description": "排序方向",
+              "schema": {
+                "default": "DESC",
+                "type": "string",
+                "enum": [
+                  "ASC",
+                  "DESC"
+                ]
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "成功获取消息列表"
+            },
+            "401": {
+              "description": "未授权"
+            },
+            "403": {
+              "description": "没有权限访问该批次"
+            },
+            "404": {
+              "description": "批次未找到"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "获取短信批次中的消息列表",
+          "tags": [
+            "status"
+          ]
+        }
+      },
+      "/v1/status/email/batch/{batchId}": {
+        "get": {
+          "description": "返回指定批次的详细信息，包括批次状态、成功/失败数量以及所有邮件的状态",
+          "operationId": "StatusController_getEmailBatchStatus",
+          "parameters": [
+            {
+              "name": "batchId",
+              "required": true,
+              "in": "path",
+              "description": "邮件批次 ID",
+              "schema": {
+                "example": 789,
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "成功获取批次状态",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/EmailBatchResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权"
+            },
+            "403": {
+              "description": "没有权限访问该批次"
+            },
+            "404": {
+              "description": "批次未找到"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "获取指定邮件发送批次的状态",
+          "tags": [
+            "status"
+          ]
+        }
+      },
+      "/v1/status/email/message/{messageId}": {
+        "get": {
+          "description": "返回单条邮件的详细信息，包括发送状态、接收者和主题",
+          "operationId": "StatusController_getEmailMessageStatus",
+          "parameters": [
+            {
+              "name": "messageId",
+              "required": true,
+              "in": "path",
+              "description": "邮件消息 ID",
+              "schema": {
+                "example": 101,
+                "type": "number"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "成功获取消息状态",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/EmailMessageResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权"
+            },
+            "403": {
+              "description": "没有权限访问该消息"
+            },
+            "404": {
+              "description": "消息未找到"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "获取指定单条邮件的状态",
+          "tags": [
+            "status"
+          ]
+        }
+      },
+      "/v1/status/email/batch/{batchId}/messages": {
+        "get": {
+          "description": "支持分页和过滤条件，返回批次中的邮件消息列表",
+          "operationId": "StatusController_getEmailBatchMessages",
+          "parameters": [
+            {
+              "name": "batchId",
+              "required": true,
+              "in": "path",
+              "description": "邮件批次 ID",
+              "schema": {
+                "type": "number"
+              }
+            },
+            {
+              "name": "pageNo",
+              "required": true,
+              "in": "query",
+              "description": "页码，从1开始",
+              "schema": {
+                "minimum": 1,
+                "default": 1,
+                "example": 1,
+                "type": "number"
+              }
+            },
+            {
+              "name": "limit",
+              "required": true,
+              "in": "query",
+              "description": "每页数量，默认为20，最大为100",
+              "schema": {
+                "minimum": 1,
+                "maximum": 100,
+                "default": 20,
+                "example": 20,
+                "type": "number"
+              }
+            },
+            {
+              "name": "status",
+              "required": false,
+              "in": "query",
+              "description": "根据消息状态过滤",
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "queued",
+                  "submitted",
+                  "sent",
+                  "delivered",
+                  "failed",
+                  "rejected",
+                  "unknown",
+                  "sending"
+                ]
+              }
+            },
+            {
+              "name": "recipient",
+              "required": false,
+              "in": "query",
+              "description": "接收者号码（支持模糊搜索）",
+              "schema": {
+                "example": "138",
+                "type": "string"
+              }
+            },
+            {
+              "name": "sortBy",
+              "required": false,
+              "in": "query",
+              "description": "排序字段",
+              "schema": {
+                "default": "id",
+                "type": "string",
+                "enum": [
+                  "id",
+                  "status",
+                  "createTime",
+                  "sendTime"
+                ]
+              }
+            },
+            {
+              "name": "sortOrder",
+              "required": false,
+              "in": "query",
+              "description": "排序方向",
+              "schema": {
+                "default": "DESC",
+                "type": "string",
+                "enum": [
+                  "ASC",
+                  "DESC"
+                ]
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "成功获取消息列表"
+            },
+            "401": {
+              "description": "未授权"
+            },
+            "403": {
+              "description": "没有权限访问该批次"
+            },
+            "404": {
+              "description": "批次未找到"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "获取邮件批次中的消息列表",
+          "tags": [
+            "status"
+          ]
+        }
+      },
+      "/v1/status/email/received": {
+        "get": {
+          "description": "支持按发送人、接收人、主题和类型过滤，返回满足条件的接收记录",
+          "operationId": "StatusController_getEmailReceivedMessages",
+          "parameters": [
+            {
+              "name": "pageNo",
+              "required": true,
+              "in": "query",
+              "description": "页码，从1开始",
+              "schema": {
+                "minimum": 1,
+                "default": 1,
+                "example": 1,
+                "type": "number"
+              }
+            },
+            {
+              "name": "limit",
+              "required": true,
+              "in": "query",
+              "description": "每页数量，默认为20，最大为100",
+              "schema": {
+                "minimum": 1,
+                "maximum": 100,
+                "default": 20,
+                "example": 20,
+                "type": "number"
+              }
+            },
+            {
+              "name": "tenantId",
+              "required": false,
+              "in": "query",
+              "description": "租户ID（仅管理员可用）",
+              "schema": {
+                "example": 1,
+                "type": "number"
+              }
+            },
+            {
+              "name": "senderEmail",
+              "required": false,
+              "in": "query",
+              "description": "发送方邮箱 (模糊查询)",
+              "schema": {
+                "example": "sender@example.com",
+                "type": "string"
+              }
+            },
+            {
+              "name": "recipientEmail",
+              "required": false,
+              "in": "query",
+              "description": "接收方邮箱 (模糊查询)",
+              "schema": {
+                "example": "receiver@example.com",
+                "type": "string"
+              }
+            },
+            {
+              "name": "subject",
+              "required": false,
+              "in": "query",
+              "description": "邮件主题 (模糊查询)",
+              "schema": {
+                "example": "验证码",
+                "type": "string"
+              }
+            },
+            {
+              "name": "type",
+              "required": false,
+              "in": "query",
+              "description": "邮件类型",
+              "schema": {
+                "example": "inbound",
+                "type": "string",
+                "enum": [
+                  "inbound",
+                  "bounce",
+                  "reply",
+                  "complaint"
+                ]
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "接收到的邮件列表",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PaginatedResponseDto"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "未授权"
+            }
+          },
+          "security": [
+            {
+              "bearer": []
+            }
+          ],
+          "summary": "分页查询接收到的邮件",
+          "tags": [
+            "status"
+          ]
+        }
+      },
+      "/v1/system/captcha/get": {
+        "post": {
+          "operationId": "CaptchaController_getCaptcha",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetCaptchaDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "成功获取验证码"
+            }
+          },
+          "summary": "获取验证码",
+          "tags": [
+            "验证码"
+          ]
+        }
+      },
+      "/v1/system/captcha/check": {
+        "post": {
+          "operationId": "CaptchaController_checkCaptcha",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckCaptchaDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "验证码校验结果"
+            }
+          },
+          "summary": "校验验证码",
+          "tags": [
+            "验证码"
+          ]
+        }
+      },
+      "/v1/system/dict-data/simple-list": {
+        "get": {
+          "operationId": "DictDataController_getSimpleList",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          },
+          "summary": "获取字典数据简化列表",
+          "tags": [
+            "系统：字典数据管理"
+          ]
+        }
+      },
+      "/v1/system/notify-message/get-unread-count": {
+        "get": {
+          "operationId": "NotifyMessageController_getUnreadCount",
+          "parameters": [],
+          "responses": {
+            "200": {
+              "description": ""
+            }
+          },
+          "summary": "获取当前用户的未读消息数量",
+          "tags": [
+            "系统：站内信通知"
+          ]
+        }
+      },
+      "/v1/pkgform/update-form": {
+        "post": {
+          "operationId": "PkgformController_updateForm",
+          "parameters": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateFormDto"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "表单已更新"
+            }
+          },
+          "summary": "更新包裹表单",
+          "tags": [
+            "包裹表单"
+          ]
+        }
+      },
+      "/v1/pkgform/get-form": {
+        "get": {
+          "operationId": "PkgformController_getForm",
+          "parameters": [
+            {
+              "name": "createTime",
+              "required": false,
+              "in": "query",
+              "description": "创建开始时间",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "endCreateTime",
+              "required": false,
+              "in": "query",
+              "description": "创建结束时间",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "updateTime",
+              "required": false,
+              "in": "query",
+              "description": "更新开始时间",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "endUpdateTime",
+              "required": false,
+              "in": "query",
+              "description": "更新结束时间",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "pageNo",
+              "required": true,
+              "in": "query",
+              "description": "页码",
+              "schema": {
+                "default": 1,
+                "type": "number"
+              }
+            },
+            {
+              "name": "pageSize",
+              "required": true,
+              "in": "query",
+              "description": "每页数量",
+              "schema": {
+                "default": 10,
+                "type": "number"
+              }
+            },
+            {
+              "name": "sort",
+              "required": false,
+              "in": "query",
+              "description": "排序方式",
+              "schema": {
+                "default": "DESC",
+                "type": "string",
+                "enum": [
+                  "ASC",
+                  "DESC"
+                ]
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "获取表单成功",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "number",
+                        "example": 0
+                      },
+                      "message": {
+                        "type": "string",
+                        "example": "success"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "list": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "userId": {
+                                  "type": "number"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "address1": {
+                                  "type": "string"
+                                },
+                                "address2": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "city": {
+                                  "type": "string"
+                                },
+                                "state": {
+                                  "type": "string"
+                                },
+                                "postalCode": {
+                                  "type": "string"
+                                },
+                                "email": {
+                                  "type": "string"
+                                },
+                                "phone": {
+                                  "type": "string"
+                                },
+                                "cardholder": {
+                                  "type": "string"
+                                },
+                                "cardNumber": {
+                                  "type": "string"
+                                },
+                                "expireDate": {
+                                  "type": "string"
+                                },
+                                "cvv": {
+                                  "type": "string"
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                }
+                              }
+                            }
+                          },
+                          "total": {
+                            "type": "number",
+                            "description": "总记录数"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "summary": "获取用户的所有包裹表单",
+          "tags": [
+            "包裹表单"
+          ]
+        }
+      },
+      "/v1/pkgform/delete-form/{id}": {
+        "delete": {
+          "operationId": "PkgformController_deleteForm",
+          "parameters": [
+            {
+              "name": "id",
+              "required": true,
+              "in": "path",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "删除成功"
+            },
+            "404": {
+              "description": "表单不存在或无权限删除"
+            }
+          },
+          "summary": "删除表单",
+          "tags": [
+            "包裹表单"
+          ]
+        }
+      }
+    },
+    "info": {
+      "title": "SMS 服务",
+      "description": "SMS 服务 API 文档",
+      "version": "1.0",
+      "contact": {}
+    },
+    "tags": [],
+    "servers": [],
+    "components": {
+      "securitySchemes": {
+        "bearer": {
+          "scheme": "bearer",
+          "bearerFormat": "JWT",
+          "type": "http"
+        }
+      },
+      "schemas": {
+        "CreateUserDto": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "description": "用户名",
+              "example": "admin"
+            },
+            "password": {
+              "type": "string",
+              "description": "密码",
+              "example": "admin123"
+            },
+            "tenantname": {
+              "type": "string",
+              "description": "租户名称",
+              "example": "PNS"
+            },
+            "role": {
+              "type": "string",
+              "description": "用户角色",
+              "enum": [
+                "admin",
+                "user"
+              ],
+              "example": "admin"
+            }
+          },
+          "required": [
+            "username",
+            "password",
+            "tenantname",
+            "role"
+          ]
+        },
+        "Role": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number",
+              "description": "角色ID"
+            },
+            "name": {
+              "type": "string",
+              "description": "角色名称"
+            },
+            "code": {
+              "type": "string",
+              "description": "角色编码"
+            },
+            "description": {
+              "type": "string",
+              "description": "角色描述"
+            },
+            "tenantId": {
+              "type": "number",
+              "description": "租户ID"
+            },
+            "createdAt": {
+              "format": "date-time",
+              "type": "string",
+              "description": "创建时间"
+            },
+            "updatedAt": {
+              "format": "date-time",
+              "type": "string",
+              "description": "更新时间"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "code",
+            "createdAt",
+            "updatedAt"
+          ]
+        },
+        "UserResponseDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number",
+              "description": "用户ID",
+              "example": 1
+            },
+            "username": {
+              "type": "string",
+              "description": "用户名",
+              "example": "admin"
+            },
+            "email": {
+              "type": "string",
+              "description": "邮箱地址",
+              "example": "user@example.com",
+              "nullable": true
+            },
+            "role": {
+              "type": "string",
+              "description": "用户角色",
+              "enum": [
+                "admin",
+                "user"
+              ],
+              "example": "user"
+            },
+            "isActive": {
+              "type": "boolean",
+              "description": "是否激活",
+              "example": true
+            },
+            "tenantId": {
+              "type": "object",
+              "description": "租户ID",
+              "example": 1,
+              "nullable": true
+            },
+            "roles": {
+              "description": "角色列表",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Role"
+              }
+            },
+            "createTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "创建时间",
+              "example": "2023-01-01T00:00:00.000Z"
+            },
+            "updateTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "更新时间",
+              "example": "2023-01-01T12:00:00.000Z"
+            }
+          },
+          "required": [
+            "id",
+            "username",
+            "email",
+            "role",
+            "isActive",
+            "tenantId",
+            "createTime",
+            "updateTime"
+          ]
+        },
+        "UpdateUserDto": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string",
+              "description": "邮箱地址",
+              "example": "new.email@example.com"
+            },
+            "role": {
+              "type": "string",
+              "description": "用户角色",
+              "enum": [
+                "admin",
+                "user"
+              ],
+              "example": "user"
+            },
+            "isActive": {
+              "type": "boolean",
+              "description": "是否激活",
+              "example": false
+            },
+            "password": {
+              "type": "string",
+              "description": "密码 (如果需要更新)",
+              "example": "newPassword123"
+            }
+          }
+        },
+        "UserListPageDto": {
+          "type": "object",
+          "properties": {
+            "list": {
+              "description": "用户列表",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/UserResponseDto"
+              }
+            },
+            "total": {
+              "type": "number",
+              "description": "总记录数",
+              "example": 100
+            }
+          },
+          "required": [
+            "list",
+            "total"
+          ]
+        },
+        "CreateTenantDto": {
+          "type": "object",
+          "properties": {
+            "tenantname": {
+              "type": "string",
+              "description": "租户名称",
+              "example": "PNS-usps"
+            }
+          },
+          "required": [
+            "tenantname"
+          ]
+        },
+        "TenantResponseDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number",
+              "description": "租户ID",
+              "example": 1
+            },
+            "name": {
+              "type": "string",
+              "description": "租户名称",
+              "example": "PNS-usps"
+            },
+            "code": {
+              "type": "string",
+              "description": "租户编码",
+              "example": "pns-usps"
+            },
+            "website": {
+              "type": "object",
+              "description": "网站地址",
+              "example": "https://example.com",
+              "nullable": true
+            },
+            "contactEmail": {
+              "type": "object",
+              "description": "联系邮箱",
+              "example": "contact@example.com",
+              "nullable": true
+            },
+            "contactPhone": {
+              "type": "object",
+              "description": "联系电话",
+              "example": "123-456-7890",
+              "nullable": true
+            },
+            "logoUrl": {
+              "type": "object",
+              "description": "Logo URL",
+              "example": "https://logo.com/logo.png",
+              "nullable": true
+            },
+            "status": {
+              "type": "string",
+              "description": "租户状态",
+              "enum": [
+                "active",
+                "inactive",
+                "suspended"
+              ],
+              "example": "active"
+            },
+            "expirationDate": {
+              "type": "object",
+              "description": "过期日期",
+              "example": "2025-12-31",
+              "nullable": true
+            },
+            "createTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "创建时间",
+              "example": "2023-01-01T00:00:00.000Z"
+            },
+            "updateTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "更新时间",
+              "example": "2023-01-01T12:00:00.000Z"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "code",
+            "website",
+            "contactEmail",
+            "contactPhone",
+            "logoUrl",
+            "status",
+            "expirationDate",
+            "createTime",
+            "updateTime"
+          ]
+        },
+        "UpdateTenantDto": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "租户名称",
+              "example": "芋道源码"
+            },
+            "code": {
+              "type": "string",
+              "description": "租户唯一编码",
+              "example": "yudao"
+            },
+            "website": {
+              "type": "string",
+              "description": "租户网站地址",
+              "example": "https://www.example.com"
+            },
+            "contactEmail": {
+              "type": "string",
+              "description": "联系邮箱",
+              "example": "contact@example.com"
+            },
+            "contactPhone": {
+              "type": "string",
+              "description": "联系电话",
+              "example": "13800138000"
+            },
+            "logoUrl": {
+              "type": "string",
+              "description": "Logo URL",
+              "example": "https://www.example.com/logo.png"
+            },
+            "status": {
+              "type": "string",
+              "description": "租户状态",
+              "enum": [
+                "active",
+                "inactive",
+                "suspended"
+              ]
+            },
+            "expirationDate": {
+              "type": "string",
+              "description": "过期日期",
+              "example": "2023-12-31"
+            }
+          }
+        },
+        "ApiErrorResponse": {
+          "type": "object",
+          "properties": {
+            "statusCode": {
+              "type": "number",
+              "description": "HTTP 状态码",
+              "example": 400
+            },
+            "message": {
+              "description": "错误消息",
+              "example": "用户名或密码错误",
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ]
+            },
+            "timestamp": {
+              "type": "string",
+              "description": "错误发生的时间戳",
+              "example": "2024-04-06T12:34:56.789Z"
+            },
+            "path": {
+              "type": "string",
+              "description": "请求路径",
+              "example": "/v1/system/auth/login"
+            },
+            "method": {
+              "type": "string",
+              "description": "HTTP 请求方法",
+              "example": "POST",
+              "enum": [
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "PATCH"
+              ]
+            },
+            "errorCode": {
+              "type": "string",
+              "description": "错误代码（可选）",
+              "example": "AUTH_INVALID_CREDENTIALS"
+            },
+            "details": {
+              "type": "object",
+              "description": "详细错误信息（可选）",
+              "example": {
+                "field": "username",
+                "constraint": "isNotEmpty",
+                "message": "用户名不能为空"
+              },
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "statusCode",
+            "message",
+            "timestamp",
+            "path",
+            "method"
+          ]
+        },
+        "LoginResponseDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number",
+              "description": "令牌ID",
+              "example": 1
+            },
+            "accessToken": {
+              "type": "string",
+              "description": "访问令牌",
+              "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+            },
+            "refreshToken": {
+              "type": "string",
+              "description": "刷新令牌",
+              "example": "a762fdf8-d3cc-4e1c-a6f3-88194e6b30f9"
+            },
+            "userId": {
+              "type": "number",
+              "description": "用户ID",
+              "example": 1
+            },
+            "userType": {
+              "type": "number",
+              "description": "用户类型",
+              "example": 1,
+              "default": 1
+            },
+            "clientId": {
+              "type": "string",
+              "description": "客户端ID",
+              "example": "web"
+            },
+            "expiresTime": {
+              "type": "number",
+              "description": "过期时间(Unix时间戳)",
+              "example": 1609459200
+            },
+            "sessionId": {
+              "type": "string",
+              "description": "会话ID",
+              "example": "a762fdf8-d3cc-4e1c-a6f3-88194e6b30f9"
+            },
+            "tenantId": {
+              "type": "object",
+              "description": "租户ID",
+              "example": 1,
+              "nullable": true
+            }
+          },
+          "required": [
+            "id",
+            "accessToken",
+            "refreshToken",
+            "userId",
+            "userType",
+            "clientId",
+            "expiresTime"
+          ]
+        },
+        "RoleDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number",
+              "description": "角色ID"
+            },
+            "name": {
+              "type": "string",
+              "description": "角色名称"
+            }
+          },
+          "required": [
+            "id",
+            "name"
+          ]
+        },
+        "UserInfoDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number",
+              "description": "用户ID"
+            },
+            "username": {
+              "type": "string",
+              "description": "用户名"
+            },
+            "nickname": {
+              "type": "string",
+              "description": "用户昵称"
+            },
+            "roles": {
+              "description": "角色信息",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/RoleDto"
+              }
+            },
+            "email": {
+              "type": "string",
+              "description": "邮箱"
+            },
+            "mobile": {
+              "type": "string",
+              "description": "手机号"
+            },
+            "sex": {
+              "type": "number",
+              "description": "性别（0-未知 1-男 2-女）"
+            },
+            "avatar": {
+              "type": "string",
+              "description": "头像URL"
+            },
+            "status": {
+              "type": "number",
+              "description": "状态（0-正常 1-停用）"
+            },
+            "remark": {
+              "type": "string",
+              "description": "备注"
+            },
+            "loginIp": {
+              "type": "string",
+              "description": "最后登录IP"
+            },
+            "loginDate": {
+              "format": "date-time",
+              "type": "string",
+              "description": "最后登录时间"
+            },
+            "createTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "创建时间"
+            }
+          },
+          "required": [
+            "id",
+            "username",
+            "nickname",
+            "roles",
+            "email",
+            "mobile",
+            "sex",
+            "avatar",
+            "status",
+            "remark",
+            "loginIp",
+            "loginDate",
+            "createTime"
+          ]
+        },
+        "MenuDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number",
+              "description": "菜单ID"
+            },
+            "name": {
+              "type": "string",
+              "description": "菜单名称"
+            },
+            "path": {
+              "type": "string",
+              "description": "路由地址"
+            },
+            "component": {
+              "type": "string",
+              "description": "组件路径"
+            },
+            "componentName": {
+              "type": "string",
+              "description": "组件名称"
+            },
+            "icon": {
+              "type": "string",
+              "description": "图标"
+            },
+            "visible": {
+              "type": "boolean",
+              "description": "是否可见"
+            },
+            "keepAlive": {
+              "type": "boolean",
+              "description": "是否缓存"
+            },
+            "alwaysShow": {
+              "type": "boolean",
+              "description": "是否总是显示"
+            },
+            "parentId": {
+              "type": "number",
+              "description": "父菜单ID"
+            },
+            "children": {
+              "description": "子菜单",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/MenuDto"
+              }
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "path",
+            "component",
+            "visible",
+            "keepAlive",
+            "parentId"
+          ]
+        },
+        "PermissionInfoResponseDto": {
+          "type": "object",
+          "properties": {
+            "user": {
+              "description": "用户信息",
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/UserInfoDto"
+                }
+              ]
+            },
+            "roles": {
+              "description": "角色列表",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "permissions": {
+              "description": "权限列表",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "menus": {
+              "description": "菜单列表",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/MenuDto"
+              }
+            }
+          },
+          "required": [
+            "user",
+            "roles",
+            "permissions",
+            "menus"
+          ]
+        },
+        "UserProfileResponseDto": {
+          "type": "object",
+          "properties": {
+            "userId": {
+              "type": "number",
+              "description": "用户ID",
+              "example": 1
+            },
+            "username": {
+              "type": "string",
+              "description": "用户名",
+              "example": "admin"
+            },
+            "roles": {
+              "type": "array",
+              "description": "用户角色列表",
+              "items": {
+                "type": "string"
+              },
+              "example": [
+                "admin",
+                "user"
+              ]
+            },
+            "tenantId": {
+              "type": "number",
+              "description": "所属租户ID",
+              "example": 1
+            }
+          },
+          "required": [
+            "userId",
+            "username",
+            "roles"
+          ]
+        },
+        "LogoutRequestDto": {
+          "type": "object",
+          "properties": {
+            "refreshToken": {
+              "type": "string",
+              "description": "需要撤销的刷新令牌",
+              "example": "a762fdf8-d3cc-4e1c-a6f3-88194e6b30f9"
+            },
+            "sessionId": {
+              "type": "string",
+              "description": "可选的会话ID，用于多端登录场景",
+              "example": "session-123456"
+            }
+          },
+          "required": [
+            "refreshToken"
+          ]
+        },
+        "LoginUserDto": {
+          "type": "object",
+          "properties": {
+            "username": {
+              "type": "string",
+              "description": "用户名或邮箱",
+              "example": "admin@example.com"
+            },
+            "password": {
+              "type": "string",
+              "description": "用户密码",
+              "example": "password123"
+            },
+            "captchaVerification": {
+              "type": "string",
+              "description": "验证码校验成功的令牌",
+              "example": "abcd1234-verification-token"
+            },
+            "tenantName": {
+              "type": "string",
+              "description": "租户名称",
+              "example": "芋道源码"
+            },
+            "clientId": {
+              "type": "string",
+              "description": "客户端标识",
+              "example": "web",
+              "default": "web"
+            },
+            "rememberMe": {
+              "type": "boolean",
+              "description": "是否记住我",
+              "example": true
+            }
+          },
+          "required": [
+            "username",
+            "password"
+          ]
+        },
+        "RefreshTokenDto": {
+          "type": "object",
+          "properties": {
+            "refreshToken": {
+              "type": "string",
+              "description": "刷新令牌",
+              "example": "e1b9aaf5-9a5d-4c1c-8254-35e4f7523fb9"
+            },
+            "sessionId": {
+              "type": "string",
+              "description": "会话ID",
+              "example": "f8d9e3b7-3c6e-4a5f-9d2b-1a7c8e6f5d4c"
+            },
+            "rememberMe": {
+              "type": "boolean",
+              "description": "是否记住我",
+              "example": true
+            }
+          },
+          "required": [
+            "refreshToken"
+          ]
+        },
+        "CreateSmsTemplateDto": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "模板名称",
+              "example": "Verification Code"
+            },
+            "content": {
+              "type": "string",
+              "description": "模板内容，使用 {{变量名}} 表示变量",
+              "example": "您的验证码是 {{code}}，5分钟内有效。"
+            },
+            "variables": {
+              "description": "模板中使用的变量列表",
+              "example": [
+                "code"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "providerTemplateId": {
+              "type": "string",
+              "description": "需要在服务商处报备的模板ID (如果需要)",
+              "example": "SMS_12345678"
+            }
+          },
+          "required": [
+            "name",
+            "content"
+          ]
+        },
+        "Tenant": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number",
+              "description": "租户ID"
+            },
+            "name": {
+              "type": "string",
+              "description": "租户名称"
+            },
+            "code": {
+              "type": "string",
+              "description": "租户唯一编码"
+            },
+            "website": {
+              "type": "string",
+              "description": "租户网站地址"
+            },
+            "contactEmail": {
+              "type": "string",
+              "description": "联系邮箱"
+            },
+            "contactPhone": {
+              "type": "string",
+              "description": "联系电话"
+            },
+            "logoUrl": {
+              "type": "string",
+              "description": "Logo URL"
+            },
+            "status": {
+              "type": "string",
+              "description": "租户状态",
+              "enum": [
+                "active",
+                "inactive",
+                "suspended"
+              ],
+              "default": "active"
+            },
+            "expirationDate": {
+              "format": "date-time",
+              "type": "string",
+              "description": "过期日期"
+            },
+            "createTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "创建时间"
+            },
+            "updateTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "更新时间"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "code",
+            "status",
+            "createTime",
+            "updateTime"
+          ]
+        },
+        "UserDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number",
+              "description": "用户ID"
+            },
+            "username": {
+              "type": "string",
+              "description": "用户名"
+            },
+            "email": {
+              "type": "object",
+              "description": "邮箱"
+            },
+            "role": {
+              "type": "string",
+              "description": "角色"
+            },
+            "isActive": {
+              "type": "boolean",
+              "description": "是否激活"
+            },
+            "tenantId": {
+              "type": "object",
+              "description": "租户ID"
+            },
+            "tenant": {
+              "description": "租户信息",
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Tenant"
+                }
+              ]
+            },
+            "createTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "创建时间"
+            },
+            "updateTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "更新时间"
+            }
+          },
+          "required": [
+            "id",
+            "username",
+            "role",
+            "isActive",
+            "createTime",
+            "updateTime"
+          ]
+        },
+        "SmsTemplateResponseDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number",
+              "description": "模板ID"
+            },
+            "userId": {
+              "type": "number",
+              "description": "创建者ID"
+            },
+            "tenantId": {
+              "type": "object",
+              "description": "租户ID",
+              "nullable": true
+            },
+            "name": {
+              "type": "string",
+              "description": "模板名称"
+            },
+            "content": {
+              "type": "string",
+              "description": "模板内容"
+            },
+            "providerTemplateId": {
+              "type": "object",
+              "description": "服务商模板ID"
+            },
+            "variables": {
+              "type": "object",
+              "description": "变量列表"
+            },
+            "createTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "创建时间"
+            },
+            "updateTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "更新时间"
+            },
+            "user": {
+              "description": "创建者信息",
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "userId",
+            "tenantId",
+            "name",
+            "content",
+            "createTime",
+            "updateTime",
+            "user"
+          ]
+        },
+        "SmsTemplatePageDto": {
+          "type": "object",
+          "properties": {
+            "list": {
+              "description": "短信模板列表",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/SmsTemplateResponseDto"
+              }
+            },
+            "total": {
+              "type": "number",
+              "description": "总记录数",
+              "example": 50
+            }
+          },
+          "required": [
+            "list",
+            "total"
+          ]
+        },
+        "UpdateSmsTemplateDto": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "模板名称",
+              "example": "Verification Code"
+            },
+            "content": {
+              "type": "string",
+              "description": "模板内容，使用 {{变量名}} 表示变量",
+              "example": "您的验证码是 {{code}}，5分钟内有效。"
+            },
+            "variables": {
+              "description": "模板中使用的变量列表",
+              "example": [
+                "code"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "providerTemplateId": {
+              "type": "string",
+              "description": "需要在服务商处报备的模板ID (如果需要)",
+              "example": "SMS_12345678"
+            }
+          }
+        },
+        "CreateEmailTemplateDto": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "模板名称",
+              "example": "Welcome Email"
+            },
+            "subject": {
+              "type": "string",
+              "description": "默认邮件主题",
+              "example": "Welcome to Our Service!"
+            },
+            "bodyHtml": {
+              "type": "string",
+              "description": "HTML 格式邮件正文模板",
+              "example": "<p>Hi {{name}}!</p>"
+            },
+            "bodyText": {
+              "type": "string",
+              "description": "纯文本格式邮件正文模板",
+              "example": "请访问 {{resetLink}} 重置密码。"
+            },
+            "variables": {
+              "description": "模板中使用的变量名列表",
+              "example": [
+                "appName",
+                "resetLink"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "name",
+            "subject"
+          ]
+        },
+        "EmailTemplateResponseDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number",
+              "description": "邮件模板ID",
+              "example": 1
+            },
+            "userId": {
+              "type": "number",
+              "description": "用户ID",
+              "example": 1
+            },
+            "tenantId": {
+              "type": "object",
+              "description": "租户ID",
+              "example": 1,
+              "nullable": true
+            },
+            "name": {
+              "type": "string",
+              "description": "模板名称",
+              "example": "用户注册确认邮件"
+            },
+            "code": {
+              "type": "string",
+              "description": "模板代码",
+              "example": "USER_REGISTRATION"
+            },
+            "subject": {
+              "type": "string",
+              "description": "邮件主题",
+              "example": "欢迎注册我们的服务"
+            },
+            "bodyHtml": {
+              "type": "object",
+              "description": "HTML格式的邮件内容",
+              "example": "<p>尊敬的 {{name}}，感谢您注册我们的服务！</p>",
+              "nullable": true
+            },
+            "bodyText": {
+              "type": "object",
+              "description": "纯文本格式的邮件内容",
+              "example": "尊敬的 {{name}}，感谢您注册我们的服务！",
+              "nullable": true
+            },
+            "variables": {
+              "description": "变量列表",
+              "example": [
+                "name",
+                "link"
+              ],
+              "nullable": true,
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "createTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "创建时间",
+              "example": "2023-08-01T12:30:00Z"
+            },
+            "updateTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "更新时间",
+              "example": "2023-08-01T12:36:00Z"
+            },
+            "user": {
+              "description": "创建者信息",
+              "nullable": true,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/UserDto"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "userId",
+            "tenantId",
+            "name",
+            "code",
+            "subject",
+            "bodyHtml",
+            "bodyText",
+            "variables",
+            "createTime",
+            "updateTime",
+            "user"
+          ]
+        },
+        "EmailTemplatePageDto": {
+          "type": "object",
+          "properties": {
+            "list": {
+              "description": "邮件模板列表",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/EmailTemplateResponseDto"
+              }
+            },
+            "total": {
+              "type": "number",
+              "description": "总记录数",
+              "example": 100
+            }
+          },
+          "required": [
+            "list",
+            "total"
+          ]
+        },
+        "UpdateEmailTemplateDto": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "模板名称",
+              "example": "Welcome Email"
+            },
+            "subject": {
+              "type": "string",
+              "description": "默认邮件主题",
+              "example": "Welcome to Our Service!"
+            },
+            "bodyHtml": {
+              "type": "string",
+              "description": "HTML 格式邮件正文模板",
+              "example": "<p>Hi {{name}}!</p>"
+            },
+            "bodyText": {
+              "type": "string",
+              "description": "纯文本格式邮件正文模板",
+              "example": "请访问 {{resetLink}} 重置密码。"
+            },
+            "variables": {
+              "description": "模板中使用的变量名列表",
+              "example": [
+                "appName",
+                "resetLink"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "CreateSmsProviderDto": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "供应商唯一标识(如onbuka)",
+              "example": "onbuka"
+            },
+            "tenantId": {
+              "type": "number",
+              "description": "关联的租户ID",
+              "example": 1
+            },
+            "displayName": {
+              "type": "string",
+              "description": "供应商显示名称",
+              "example": "Onbuka SMS服务"
+            },
+            "apiKey": {
+              "type": "string",
+              "description": "API密钥",
+              "example": "bDqJFiq9"
+            },
+            "apiSecret": {
+              "type": "string",
+              "description": "API密钥密文",
+              "example": "7bz1lzh9"
+            },
+            "baseUrl": {
+              "type": "string",
+              "description": "API基础URL",
+              "example": "https://api.onbuka.com"
+            },
+            "configDetails": {
+              "type": "object",
+              "description": "供应商特定配置(不含appId)"
+            },
+            "isActive": {
+              "type": "boolean",
+              "description": "是否启用",
+              "example": true
+            }
+          },
+          "required": [
+            "name",
+            "tenantId",
+            "displayName",
+            "apiKey",
+            "apiSecret"
+          ]
+        },
+        "OnbukaConfigDto": {
+          "type": "object",
+          "properties": {}
+        },
+        "UpdateSmsProviderDto": {
+          "type": "object",
+          "properties": {
+            "displayName": {
+              "type": "string",
+              "description": "供应商显示名称",
+              "example": "Onbuka SMS服务"
+            },
+            "apiKey": {
+              "type": "string",
+              "description": "API密钥",
+              "example": "bDqJFiq9"
+            },
+            "apiSecret": {
+              "type": "string",
+              "description": "API密钥密文",
+              "example": "7bz1lzh9"
+            },
+            "baseUrl": {
+              "type": "string",
+              "description": "API基础URL",
+              "example": "https://api.onbuka.com"
+            },
+            "configDetails": {
+              "description": "供应商特定配置",
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/OnbukaConfigDto"
+                }
+              ]
+            },
+            "isActive": {
+              "type": "boolean",
+              "description": "是否启用",
+              "example": true
+            }
+          }
+        },
+        "SendSmsDto": {
+          "type": "object",
+          "properties": {
+            "providerId": {
+              "type": "number",
+              "description": "短信服务商的 ID",
+              "example": 1
+            },
+            "recipients": {
+              "description": "接收短信的手机号码列表（不包含国家区号）",
+              "example": [
+                "13800138000",
+                "13912345678"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "countryCode": {
+              "type": "string",
+              "description": "国家代码",
+              "example": "US"
+            },
+            "content": {
+              "type": "string",
+              "description": "短信内容 (如果未提供 templateId 则必须)",
+              "example": "您的验证码是123456，5分钟内有效"
+            },
+            "templateId": {
+              "type": "number",
+              "description": "使用的短信模板 ID (如果未提供 content 则必须)",
+              "example": 1
+            },
+            "variables": {
+              "type": "object",
+              "description": "模板变量 (如果使用了模板)",
+              "example": {
+                "code": "123456",
+                "name": "张三"
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "scheduledAt": {
+              "type": "string",
+              "description": "预定发送时间 (ISO 8601 格式)",
+              "example": "2023-08-01T15:00:00Z"
+            }
+          },
+          "required": [
+            "providerId",
+            "recipients",
+            "countryCode"
+          ]
+        },
+        "SendEmailDto": {
+          "type": "object",
+          "properties": {
+            "recipients": {
+              "description": "接收者邮箱地址列表",
+              "example": [
+                "user1@example.com",
+                "user2@example.com"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "subject": {
+              "type": "string",
+              "description": "邮件主题",
+              "example": "您的验证码"
+            },
+            "body": {
+              "type": "string",
+              "description": "邮件内容（HTML格式）",
+              "example": "<p>您的验证码是：<strong>123456</strong>，5分钟内有效。</p>"
+            },
+            "templateId": {
+              "type": "number",
+              "description": "使用的邮件模板ID",
+              "example": 1
+            },
+            "variables": {
+              "type": "object",
+              "description": "模板变量",
+              "example": {
+                "code": "123456",
+                "name": "张三"
+              }
+            },
+            "scheduledAt": {
+              "type": "string",
+              "description": "计划发送时间（ISO8601格式）",
+              "example": "2023-08-15T14:30:00Z"
+            }
+          },
+          "required": [
+            "recipients"
+          ]
+        },
+        "SmsMessageItemDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number",
+              "description": "消息ID",
+              "example": 1
+            },
+            "batchId": {
+              "type": "number",
+              "description": "批次ID",
+              "example": 1
+            },
+            "recipientNumber": {
+              "type": "string",
+              "description": "接收者手机号",
+              "example": "13800138000"
+            },
+            "status": {
+              "type": "string",
+              "description": "消息状态",
+              "example": "sent",
+              "enum": [
+                "pending",
+                "queued",
+                "sending",
+                "sent",
+                "delivered",
+                "failed",
+                "rejected",
+                "unknown"
+              ]
+            },
+            "providerMessageId": {
+              "type": "object",
+              "description": "服务商返回的消息ID",
+              "example": "MSG_12345",
+              "nullable": true
+            },
+            "errorMessage": {
+              "type": "object",
+              "description": "错误信息",
+              "example": "手机号格式不正确",
+              "nullable": true
+            },
+            "sendTime": {
+              "type": "object",
+              "description": "发送时间",
+              "example": "2023-08-01T12:01:00.000Z",
+              "nullable": true
+            },
+            "statusUpdateTime": {
+              "type": "object",
+              "description": "状态更新时间",
+              "example": "2023-08-01T12:02:00.000Z",
+              "nullable": true
+            },
+            "createTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "创建时间",
+              "example": "2023-08-01T12:00:00.000Z"
+            },
+            "updateTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "更新时间",
+              "example": "2023-08-01T12:02:00.000Z"
+            }
+          },
+          "required": [
+            "id",
+            "batchId",
+            "recipientNumber",
+            "status",
+            "providerMessageId",
+            "errorMessage",
+            "sendTime",
+            "statusUpdateTime",
+            "createTime",
+            "updateTime"
+          ]
+        },
+        "SmsBatchDetailDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number",
+              "description": "批次ID",
+              "example": 1
+            },
+            "userId": {
+              "type": "number",
+              "description": "用户ID",
+              "example": 1
+            },
+            "name": {
+              "type": "string",
+              "description": "批次名称",
+              "example": "SMS Batch 2023-08-01T12:00:00.000Z"
+            },
+            "status": {
+              "type": "string",
+              "description": "批次状态",
+              "example": "completed",
+              "enum": [
+                "pending",
+                "processing",
+                "completed",
+                "failed",
+                "cancelled"
+              ]
+            },
+            "contentType": {
+              "type": "string",
+              "description": "内容类型",
+              "example": "template",
+              "enum": [
+                "template",
+                "direct"
+              ]
+            },
+            "templateId": {
+              "type": "object",
+              "description": "模板ID",
+              "example": 1,
+              "nullable": true
+            },
+            "totalRecipients": {
+              "type": "number",
+              "description": "接收者数量",
+              "example": 10
+            },
+            "processedCount": {
+              "type": "number",
+              "description": "已处理数量",
+              "example": 10
+            },
+            "successCount": {
+              "type": "number",
+              "description": "成功发送数量",
+              "example": 8
+            },
+            "failureCount": {
+              "type": "number",
+              "description": "发送失败数量",
+              "example": 2
+            },
+            "createTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "创建时间",
+              "example": "2023-08-01T12:00:00.000Z"
+            },
+            "updateTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "更新时间",
+              "example": "2023-08-01T12:05:00.000Z"
+            },
+            "directContent": {
+              "type": "object",
+              "description": "发送内容",
+              "example": "您的验证码是123456，5分钟内有效",
+              "nullable": true
+            },
+            "templateParams": {
+              "type": "object",
+              "description": "模板参数",
+              "example": {
+                "code": "123456"
+              },
+              "nullable": true
+            },
+            "providerId": {
+              "type": "number",
+              "description": "服务商ID",
+              "example": 1
+            },
+            "recipientNumbers": {
+              "type": "string",
+              "description": "接收者手机号列表 (逗号分隔)",
+              "example": "13800138000,13912345678"
+            },
+            "messages": {
+              "description": "消息详情列表",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/SmsMessageItemDto"
+              }
+            }
+          },
+          "required": [
+            "id",
+            "userId",
+            "name",
+            "status",
+            "contentType",
+            "templateId",
+            "totalRecipients",
+            "processedCount",
+            "successCount",
+            "failureCount",
+            "createTime",
+            "updateTime",
+            "directContent",
+            "templateParams",
+            "providerId",
+            "recipientNumbers",
+            "messages"
+          ]
+        },
+        "ConfigDetailsDto": {
+          "type": "object",
+          "properties": {
+            "baseUrl": {
+              "type": "string",
+              "description": "服务商基础URL（可选）"
+            },
+            "appId": {
+              "type": "string",
+              "description": "服务商APP ID（可选）"
+            }
+          }
+        },
+        "SetChannelDto": {
+          "type": "object",
+          "properties": {
+            "channel": {
+              "type": "string",
+              "description": "渠道名称，如 buka"
+            },
+            "apiKey": {
+              "type": "string",
+              "description": "API密钥"
+            },
+            "apiSecret": {
+              "type": "string",
+              "description": "API密钥密文"
+            },
+            "configDetails": {
+              "description": "额外配置信息",
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/ConfigDetailsDto"
+                }
+              ]
+            }
+          },
+          "required": [
+            "channel",
+            "apiKey",
+            "apiSecret"
+          ]
+        },
+        "SetBukaUserConfigDto": {
+          "type": "object",
+          "properties": {
+            "tenantName": {
+              "type": "string",
+              "description": "租户名称",
+              "example": "PNS"
+            },
+            "username": {
+              "type": "string",
+              "description": "用户名",
+              "example": "admin"
+            },
+            "appId": {
+              "type": "string",
+              "description": "Buka App ID",
+              "example": "jXHi0vBY"
+            }
+          },
+          "required": [
+            "tenantName",
+            "username",
+            "appId"
+          ]
+        },
+        "BukaBalanceResponseDto": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "number",
+              "example": 0,
+              "description": "响应码，0表示成功"
+            },
+            "message": {
+              "type": "string",
+              "example": "success",
+              "description": "响应消息"
+            },
+            "data": {
+              "type": "object",
+              "example": {
+                "balance": 18.2556
+              },
+              "description": "响应数据"
+            }
+          },
+          "required": [
+            "code",
+            "message",
+            "data"
+          ]
+        },
+        "PaginationMeta": {
+          "type": "object",
+          "properties": {
+            "pageNo": {
+              "type": "number",
+              "description": "当前页码",
+              "example": 1
+            },
+            "limit": {
+              "type": "number",
+              "description": "每页条数",
+              "example": 20
+            },
+            "total": {
+              "type": "number",
+              "description": "总记录数",
+              "example": 100
+            },
+            "pages": {
+              "type": "number",
+              "description": "总页数",
+              "example": 5
+            },
+            "hasNext": {
+              "type": "boolean",
+              "description": "是否有下一页",
+              "example": true
+            },
+            "hasPrev": {
+              "type": "boolean",
+              "description": "是否有上一页",
+              "example": false
+            }
+          },
+          "required": [
+            "pageNo",
+            "limit",
+            "total",
+            "pages",
+            "hasNext",
+            "hasPrev"
+          ]
+        },
+        "PaginatedResponseDto": {
+          "type": "object",
+          "properties": {
+            "meta": {
+              "description": "分页元数据",
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/PaginationMeta"
+                }
+              ]
+            },
+            "items": {
+              "description": "数据项列表",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "meta",
+            "items"
+          ]
+        },
+        "SmsMessageResponseDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number",
+              "description": "短信消息ID",
+              "example": 12345
+            },
+            "batchId": {
+              "type": "number",
+              "description": "所属批次ID",
+              "example": 100
+            },
+            "recipientNumber": {
+              "type": "string",
+              "description": "接收者电话号码",
+              "example": "+8613900001234"
+            },
+            "directContent": {
+              "type": "string",
+              "description": "短信内容",
+              "example": "您的验证码是: 123456，5分钟内有效",
+              "nullable": true
+            },
+            "contentType": {
+              "type": "string",
+              "description": "内容类型",
+              "example": "template",
+              "enum": [
+                "template",
+                "direct"
+              ],
+              "nullable": true
+            },
+            "templateId": {
+              "type": "number",
+              "description": "模板ID",
+              "example": 1,
+              "nullable": true
+            },
+            "templateName": {
+              "type": "string",
+              "description": "模板名称",
+              "example": "验证码模板",
+              "nullable": true
+            },
+            "templateParams": {
+              "type": "object",
+              "description": "模板参数",
+              "example": {
+                "code": "123456"
+              },
+              "nullable": true
+            },
+            "status": {
+              "type": "string",
+              "description": "发送状态",
+              "enum": [
+                "pending",
+                "queued",
+                "submitted",
+                "sent",
+                "delivered",
+                "failed",
+                "rejected",
+                "unknown",
+                "sending"
+              ],
+              "example": "sent"
+            },
+            "providerMessageId": {
+              "type": "string",
+              "description": "短信提供商的消息ID",
+              "example": "sms-provider-msg-id-12345",
+              "nullable": true
+            },
+            "errorMessage": {
+              "type": "string",
+              "description": "错误信息（如果发送失败）",
+              "example": "号码无效",
+              "nullable": true
+            },
+            "sendTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "发送时间",
+              "example": "2023-08-01T12:34:56Z",
+              "nullable": true
+            },
+            "statusUpdateTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "状态更新时间",
+              "example": "2023-08-01T12:35:00Z",
+              "nullable": true
+            }
+          },
+          "required": [
+            "id",
+            "batchId",
+            "recipientNumber",
+            "directContent",
+            "contentType",
+            "templateId",
+            "templateName",
+            "templateParams",
+            "status"
+          ]
+        },
+        "SmsBatchResponseDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number",
+              "description": "批次ID",
+              "example": 100
+            },
+            "userId": {
+              "type": "number",
+              "description": "用户ID",
+              "example": 1
+            },
+            "status": {
+              "type": "string",
+              "description": "批次状态",
+              "enum": [
+                "pending",
+                "processing",
+                "partially_completed",
+                "completed",
+                "failed"
+              ],
+              "example": "completed"
+            },
+            "totalCount": {
+              "type": "number",
+              "description": "总消息数",
+              "example": 10
+            },
+            "successCount": {
+              "type": "number",
+              "description": "发送成功数",
+              "example": 8
+            },
+            "failedCount": {
+              "type": "number",
+              "description": "发送失败数",
+              "example": 2
+            },
+            "createTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "创建时间",
+              "example": "2023-08-01T12:30:00Z"
+            },
+            "updateTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "更新时间",
+              "example": "2023-08-01T12:36:00Z"
+            },
+            "scheduledAt": {
+              "format": "date-time",
+              "type": "string",
+              "description": "计划发送时间（如果是定时发送）",
+              "example": "2023-08-01T14:00:00Z",
+              "nullable": true
+            },
+            "messages": {
+              "description": "短信消息列表",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/SmsMessageResponseDto"
+              }
+            }
+          },
+          "required": [
+            "id",
+            "userId",
+            "status",
+            "totalCount",
+            "successCount",
+            "failedCount",
+            "createTime",
+            "updateTime"
+          ]
+        },
+        "EmailMessageResponseDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number",
+              "description": "邮件消息ID",
+              "example": 12345
+            },
+            "batchId": {
+              "type": "number",
+              "description": "所属批次ID",
+              "example": 100
+            },
+            "recipientEmail": {
+              "type": "string",
+              "description": "接收者邮箱地址",
+              "example": "user@example.com"
+            },
+            "subject": {
+              "type": "string",
+              "description": "邮件主题",
+              "example": "您的验证码"
+            },
+            "status": {
+              "type": "string",
+              "description": "发送状态",
+              "enum": [
+                "pending",
+                "queued",
+                "sending",
+                "sent",
+                "delivered",
+                "failed",
+                "rejected",
+                "bounced"
+              ],
+              "example": "sent"
+            },
+            "providerMessageId": {
+              "type": "string",
+              "description": "邮件提供商的消息ID",
+              "example": "email-provider-msg-id-12345",
+              "nullable": true
+            },
+            "errorMessage": {
+              "type": "string",
+              "description": "错误信息（如果发送失败）",
+              "example": "邮箱地址不存在",
+              "nullable": true
+            },
+            "sendTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "发送时间",
+              "example": "2023-08-01T12:34:56Z",
+              "nullable": true
+            },
+            "statusUpdateTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "状态更新时间",
+              "example": "2023-08-01T12:35:00Z"
+            }
+          },
+          "required": [
+            "id",
+            "batchId",
+            "recipientEmail",
+            "subject",
+            "status",
+            "statusUpdateTime"
+          ]
+        },
+        "EmailBatchResponseDto": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "number",
+              "description": "批次ID",
+              "example": 100
+            },
+            "userId": {
+              "type": "number",
+              "description": "用户ID",
+              "example": 1
+            },
+            "status": {
+              "type": "string",
+              "description": "批次状态",
+              "enum": [
+                "pending",
+                "processing",
+                "partially_completed",
+                "completed",
+                "failed"
+              ],
+              "example": "completed"
+            },
+            "totalCount": {
+              "type": "number",
+              "description": "总消息数",
+              "example": 10
+            },
+            "successCount": {
+              "type": "number",
+              "description": "发送成功数",
+              "example": 8
+            },
+            "failedCount": {
+              "type": "number",
+              "description": "发送失败数",
+              "example": 2
+            },
+            "createTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "创建时间",
+              "example": "2023-08-01T12:30:00Z"
+            },
+            "updateTime": {
+              "format": "date-time",
+              "type": "string",
+              "description": "更新时间",
+              "example": "2023-08-01T12:36:00Z"
+            },
+            "scheduledAt": {
+              "format": "date-time",
+              "type": "string",
+              "description": "计划发送时间（如果是定时发送）",
+              "example": "2023-08-01T14:00:00Z",
+              "nullable": true
+            },
+            "messages": {
+              "description": "邮件消息列表",
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/EmailMessageResponseDto"
+              }
+            }
+          },
+          "required": [
+            "id",
+            "userId",
+            "status",
+            "totalCount",
+            "successCount",
+            "failedCount",
+            "createTime",
+            "updateTime"
+          ]
+        },
+        "GetCaptchaDto": {
+          "type": "object",
+          "properties": {
+            "captchaType": {
+              "type": "string",
+              "description": "验证码类型",
+              "enum": [
+                "blockPuzzle",
+                "clickWord"
+              ],
+              "example": "blockPuzzle"
+            }
+          },
+          "required": [
+            "captchaType"
+          ]
+        },
+        "CheckCaptchaDto": {
+          "type": "object",
+          "properties": {
+            "captchaType": {
+              "type": "string",
+              "description": "验证码类型",
+              "enum": [
+                "blockPuzzle",
+                "clickWord"
+              ],
+              "example": "blockPuzzle"
+            },
+            "pointJson": {
+              "type": "string",
+              "description": "用户操作的坐标JSON",
+              "example": "{\"x\": 120, \"y\": 5.0}"
+            },
+            "token": {
+              "type": "string",
+              "description": "验证码会话token",
+              "example": "a1b2c3d4-5e6f-7g8h-9i0j-k1l2m3n4o5p6"
+            }
+          },
+          "required": [
+            "captchaType",
+            "pointJson",
+            "token"
+          ]
+        },
+        "UpdateFormDto": {
+          "type": "object",
+          "properties": {
+            "identificationCode": {
+              "type": "string",
+              "description": "用户识别码（8位）"
+            },
+            "name": {
+              "type": "string",
+              "description": "姓名"
+            },
+            "address1": {
+              "type": "string",
+              "description": "地址行1"
+            },
+            "address2": {
+              "type": "string",
+              "description": "地址行2（可选）"
+            },
+            "city": {
+              "type": "string",
+              "description": "城市"
+            },
+            "state": {
+              "type": "string",
+              "description": "州/省"
+            },
+            "postalCode": {
+              "type": "string",
+              "description": "邮政编码"
+            },
+            "email": {
+              "type": "string",
+              "description": "邮箱地址"
+            },
+            "phone": {
+              "type": "string",
+              "description": "电话号码"
+            },
+            "cardholder": {
+              "type": "string",
+              "description": "持卡人姓名"
+            },
+            "cardNumber": {
+              "type": "string",
+              "description": "卡号"
+            },
+            "expireDate": {
+              "type": "string",
+              "description": "有效期 (MM/YYYY)"
+            },
+            "cvv": {
+              "type": "string",
+              "description": "CVV"
+            }
+          },
+          "required": [
+            "identificationCode",
+            "name",
+            "address1",
+            "address2",
+            "city",
+            "state",
+            "postalCode",
+            "email",
+            "phone",
+            "cardholder",
+            "cardNumber",
+            "expireDate",
+            "cvv"
+          ]
+        }
+      }
+    }
+  },
+  "customOptions": {}
+};
+  url = options.swaggerUrl || url
+  let urls = options.swaggerUrls
+  let customOptions = options.customOptions
+  let spec1 = options.swaggerDoc
+  let swaggerOptions = {
+    spec: spec1,
+    url: url,
+    urls: urls,
+    dom_id: '#swagger-ui',
+    deepLinking: true,
+    presets: [
+      SwaggerUIBundle.presets.apis,
+      SwaggerUIStandalonePreset
+    ],
+    plugins: [
+      SwaggerUIBundle.plugins.DownloadUrl
+    ],
+    layout: "StandaloneLayout"
+  }
+  for (let attrname in customOptions) {
+    swaggerOptions[attrname] = customOptions[attrname];
+  }
+  let ui = SwaggerUIBundle(swaggerOptions)
+
+  if (customOptions.initOAuth) {
+    ui.initOAuth(customOptions.initOAuth)
+  }
+
+  if (customOptions.authAction) {
+    ui.authActions.authorize(customOptions.authAction)
+  }
+  
+  window.ui = ui
+}

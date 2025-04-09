@@ -33,6 +33,7 @@ import { DictModule } from './system/dict.module';
 import { NotifyMessageModule } from './system/notify-message.module';
 import { SmsChannelConfigModule } from './sms-channel-config/sms-channel-config.module';
 import { PkgformModule } from './pkgform/pkgform.module';
+import { SmsBatchModule } from './sms-batch/sms-batch.module';
 
 // 创建 ExpressAdapter 实例
 // const serverAdapter = new ExpressAdapter(); // 注释掉
@@ -102,6 +103,7 @@ import { PkgformModule } from './pkgform/pkgform.module';
     NotifyMessageModule,
     SmsChannelConfigModule,
     PkgformModule,
+    SmsBatchModule,
   ],
   controllers: [AppController],
   providers: [AppService],

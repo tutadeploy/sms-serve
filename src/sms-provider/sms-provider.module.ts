@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HttpModule } from '@nestjs/axios';
 import { ConfigModule } from '@nestjs/config';
@@ -18,10 +18,10 @@ import { UserChannelConfig } from '../sms-channel-config/entities/user-channel-c
     ]),
     HttpModule,
     ConfigModule,
-    BukaModule,
+    forwardRef(() => BukaModule),
   ],
   controllers: [SmsProviderController],
   providers: [SmsProviderService],
-  exports: [SmsProviderService, TypeOrmModule, BukaModule],
+  exports: [SmsProviderService, TypeOrmModule, forwardRef(() => BukaModule)],
 })
 export class SmsProviderModule {}

@@ -26,6 +26,8 @@ DROP TABLE IF EXISTS email_messages;
 DROP TABLE IF EXISTS email_notification_batches;
 DROP TABLE IF EXISTS sms_messages;
 DROP TABLE IF EXISTS sms_dispatch_batches;
+DROP TABLE IF EXISTS sms_batch_buka_detail;
+DROP TABLE IF EXISTS sms_batch;
 DROP TABLE IF EXISTS sms_templates;
 DROP TABLE IF EXISTS email_templates;
 DROP TABLE IF EXISTS sso_sessions;
@@ -220,15 +222,16 @@ CREATE TABLE `payments` (
 CREATE TABLE `sms_providers` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(100) NOT NULL UNIQUE COMMENT '提供商唯一标识名称 (e.g., onbuka, aliyun)',
+  `tenant_id` INT UNSIGNED NULL COMMENT '关联的租户ID',
   `display_name` VARCHAR(150) NULL COMMENT '提供商显示名称',
-  `api_key` VARCHAR(255) NULL COMMENT 'API Key',
-  `api_secret` VARCHAR(255) NULL COMMENT 'API Secret',
-  `base_url` VARCHAR(255) NULL COMMENT 'API 基础 URL',
-  `config_details` JSON NULL COMMENT '特定提供商的额外配置 (JSON格式, e.g., onbuka appid)',
+  `base_url` VARCHAR(255) NOT NULL COMMENT 'API 基础 URL（系统级配置）',
+  `config_details` JSON NULL COMMENT '特定提供商的额外配置 (JSON格式)',
   `is_active` BOOLEAN NOT NULL DEFAULT true COMMENT '是否启用',
   `createTime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `updateTime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='短信服务提供商配置';
+  `updateTime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  FOREIGN KEY (`tenant_id`) REFERENCES `tenants`(`id`) ON DELETE SET NULL,
+  INDEX `idx_sms_provider_tenant` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='短信服务提供商基础配置（系统级）';
 
 -- 邮件服务提供商配置表 (未来可能需要)
 -- CREATE TABLE `email_providers` ( ... ); -- 结构类似 sms_providers
@@ -267,6 +270,46 @@ CREATE TABLE `email_templates` (
   FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
   FOREIGN KEY (`tenant_id`) REFERENCES `tenants`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='邮件模板表';
+
+-- 批次基础信息表（所有渠道共用）
+CREATE TABLE `sms_batch` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `tenant_id` INT UNSIGNED NOT NULL,
+  `user_id` INT UNSIGNED NOT NULL,
+  `channel` VARCHAR(50) NOT NULL, -- 'onbuka', 'twilio' 等
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `status` VARCHAR(20) NOT NULL, -- 'pending', 'submitted', 'completed', 'failed'
+  `reason` TEXT,
+  `total_count` INT DEFAULT 0,
+  `success_count` INT DEFAULT 0,
+  `failed_count` INT DEFAULT 0,
+  `content` TEXT NOT NULL,
+  `createTime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updateTime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  INDEX `idx_batch_tenant_user` (`tenant_id`, `user_id`),
+  INDEX `idx_batch_status` (`status`),
+  FOREIGN KEY (`tenant_id`) REFERENCES `tenants`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='短信批次基础信息表';
+
+-- Buka特定批次详情表
+CREATE TABLE `sms_batch_buka_detail` (
+  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  `batch_id` INT UNSIGNED NOT NULL, -- 关联到sms_batch表的id
+  `message_id` INT UNSIGNED NOT NULL, -- 系统内部消息ID
+  `order_id` VARCHAR(50) NOT NULL, -- 提交给Buka的订单ID
+  `provider_message_id` VARCHAR(50), -- Buka返回的msgId
+  `recipient_number` VARCHAR(20) NOT NULL,
+  `status` VARCHAR(20) DEFAULT 'pending', -- 'pending', 'delivered', 'failed', 'sending'
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `createTime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updateTime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  INDEX `idx_buka_detail_batch` (`batch_id`),
+  INDEX `idx_buka_detail_status` (`status`),
+  INDEX `idx_buka_msgid` (`provider_message_id`),
+  FOREIGN KEY (`batch_id`) REFERENCES `sms_batch`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Buka批次详情表';
 
 -- 短信调度批次表 (记录用户 API 请求)
 CREATE TABLE `sms_dispatch_batches` (
@@ -458,16 +501,15 @@ CREATE TABLE `tenant_channel_configs` (
   `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `tenant_id` INT UNSIGNED NOT NULL COMMENT '关联的租户ID',
   `channel` VARCHAR(50) NOT NULL COMMENT '渠道标识名称',
-  `api_key` VARCHAR(255) NULL COMMENT 'API Key',
-  `api_secret` VARCHAR(255) NULL COMMENT 'API Secret',
-  `base_url` VARCHAR(255) NULL COMMENT 'API 基础 URL',
+  `api_key` VARCHAR(255) NOT NULL COMMENT 'API Key（租户特定）',
+  `api_secret` VARCHAR(255) NOT NULL COMMENT 'API Secret（租户特定）',
   `config_details` JSON NULL COMMENT '特定提供商的额外配置 (JSON格式)',
   `is_active` BOOLEAN NOT NULL DEFAULT TRUE COMMENT '是否启用',
   `createTime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updateTime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   UNIQUE KEY `uk_tenant_channel` (`tenant_id`, `channel`),
   FOREIGN KEY (`tenant_id`) REFERENCES `tenants`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='租户渠道配置表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='租户渠道认证配置表（租户特定）';
 
 -- 创建用户渠道配置表
 CREATE TABLE `user_channel_configs` (
@@ -498,24 +540,24 @@ CREATE TABLE `channel_supported_countries` (
 
 -- 初始化Buka支持的国家数据
 INSERT INTO `channel_supported_countries` (`channel`, `country_code`, `dial_code`, `is_active`) VALUES
-('buka', 'JP', '+81', 1),
-('buka', 'KR', '+82', 1),
-('buka', 'US', '+1', 1),
-('buka', 'GB', '+44', 1),
-('buka', 'GT', '+502', 1),
-('buka', 'HR', '+385', 1),
-('buka', 'MX', '+52', 1),
-('buka', 'ES', '+34', 1),
-('buka', 'EG', '+20', 1),
-('buka', 'SA', '+966', 1),
-('buka', 'ZA', '+27', 1),
-('buka', 'ID', '+62', 1),
-('buka', 'VN', '+84', 1),
-('buka', 'AU', '+61', 1),
-('buka', 'IT', '+39', 1),
-('buka', 'AO', '+244', 1),
-('buka', 'CM', '+237', 1),
-('buka', 'GH', '+233', 1);
+('onbuka', 'JP', '+81', 1),
+('onbuka', 'KR', '+82', 1),
+('onbuka', 'US', '+1', 1),
+('onbuka', 'GB', '+44', 1),
+('onbuka', 'GT', '+502', 1),
+('onbuka', 'HR', '+385', 1),
+('onbuka', 'MX', '+52', 1),
+('onbuka', 'ES', '+34', 1),
+('onbuka', 'EG', '+20', 1),
+('onbuka', 'SA', '+966', 1),
+('onbuka', 'ZA', '+27', 1),
+('onbuka', 'ID', '+62', 1),
+('onbuka', 'VN', '+84', 1),
+('onbuka', 'AU', '+61', 1),
+('onbuka', 'IT', '+39', 1),
+('onbuka', 'AO', '+244', 1),
+('onbuka', 'CM', '+237', 1),
+('onbuka', 'GH', '+233', 1);
 
 -- 用户包裹表单表
 CREATE TABLE `package_forms` (
@@ -537,4 +579,12 @@ CREATE TABLE `package_forms` (
   `updateTime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   INDEX `idx_package_forms_user_id` (`user_id`),
   FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户包裹表单数据'; 
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户包裹表单数据';
+
+-- 初始化Onbuka服务提供商
+INSERT INTO `sms_providers` (`name`, `tenant_id`, `display_name`, `base_url`, `is_active`) 
+VALUES ('onbuka', 1, 'Onbuka短信服务', 'https://api.onbuka.com', true);
+
+-- 为租户1配置Onbuka渠道
+INSERT INTO `tenant_channel_configs` (`tenant_id`, `channel`, `api_key`, `api_secret`, `is_active`) 
+VALUES (1, 'onbuka', 'bDqJFiq9', '7bz1lzh9', true); 

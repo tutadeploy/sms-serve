@@ -18,6 +18,7 @@
     ],
     "typescript.tsserver.experimental.enableProjectDiagnostics": false,
     "cSpell.words": [
-        "buka"
+        "buka",
+        "onbuka"
     ]
 }

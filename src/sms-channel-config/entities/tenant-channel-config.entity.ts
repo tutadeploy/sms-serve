@@ -11,8 +11,8 @@ import {
 import { Tenant } from '../../tenant/entities/tenant.entity';
 
 /**
- * 租户渠道配置实体
- * 存储租户对应各渠道的API密钥等配置信息
+ * 租户渠道认证配置实体（租户特定）
+ * 存储租户对应各渠道的API密钥等认证信息
  */
 @Entity('tenant_channel_configs')
 @Index(['tenantId', 'channel'], { unique: true })
@@ -30,14 +30,11 @@ export class TenantChannelConfig {
   @Column({ length: 50 })
   channel!: string;
 
-  @Column({ length: 255, nullable: true })
+  @Column({ length: 255, nullable: false })
   apiKey!: string;
 
-  @Column({ length: 255, nullable: true })
+  @Column({ length: 255, nullable: false })
   apiSecret!: string;
-
-  @Column({ length: 255, nullable: true, name: 'base_url' })
-  baseUrl!: string;
 
   @Column({ type: 'json', nullable: true, name: 'config_details' })
   configDetails!: Record<string, unknown>;

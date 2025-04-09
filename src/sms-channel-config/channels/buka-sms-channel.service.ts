@@ -137,7 +137,7 @@ export class BukaSmsChannelService extends SmsChannel {
    * 获取渠道标识
    */
   getChannelCode(): string {
-    return 'buka';
+    return 'onbuka';
   }
 
   /**
@@ -234,7 +234,8 @@ export class BukaSmsChannelService extends SmsChannel {
       apiKey: tenantConfig.apiKey,
       apiSecret: tenantConfig.apiSecret,
       appId,
-      baseUrl: tenantConfig.baseUrl || this.defaultBaseUrl,
+      baseUrl:
+        (tenantConfig.configDetails?.baseUrl as string) || this.defaultBaseUrl,
     };
   }
 

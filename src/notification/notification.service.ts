@@ -115,7 +115,7 @@ export class NotificationService {
     try {
       // 根据提供商名称查询支持的国家列表
       const supportedCountries =
-        await this.smsChannelConfigService.getSupportedCountries('buka');
+        await this.smsChannelConfigService.getSupportedCountries('onbuka');
 
       // 查找指定国家代码的区号
       const countryInfo = supportedCountries.find(
@@ -772,6 +772,7 @@ export class NotificationService {
     userId: number,
     batchId: number,
   ): Promise<SmsBatchDetailDto> {
+    // 获取批次信息
     const batch = await this.smsBatchRepository.findOne({
       where: { id: batchId, userId },
     });
@@ -780,40 +781,118 @@ export class NotificationService {
       throw new NotFoundException(`Batch with ID ${batchId} not found`);
     }
 
+    // 获取批次消息
     const messages = await this.smsMessageRepository.find({
       where: { batchId },
     });
 
-    // 查询每条消息的最新状态
-    for (const message of messages) {
-      if (message.providerMessageId) {
-        try {
-          // 使用短信分发服务查询消息状态
-          const statusResult =
-            await this.smsDispatcherService.queryMessageStatus(
-              message.id,
-              batch.providerId,
-              message.providerMessageId,
-            );
+    let bukaDataUpdated = false;
 
-          if (statusResult.success) {
-            // 更新消息状态
-            await this.smsMessageRepository.update(message.id, {
-              status: statusResult.status as SmsStatus,
-              statusUpdateTime: statusResult.statusUpdateTime || new Date(),
-              errorMessage: statusResult.errorMessage || null,
-            });
+    // 尝试从Buka获取最新状态
+    try {
+      // 为每条消息查询状态并记录结果
+      let bukaSuccess = 0;
+      let bukaFail = 0;
+
+      this.logger.log(`开始查询批次${batchId}的消息状态`);
+
+      // 遍历所有消息，查询其状态
+      for (const message of messages) {
+        if (message.providerMessageId) {
+          try {
+            // 使用短信分发服务查询消息状态
+            const statusResult =
+              await this.smsDispatcherService.queryMessageStatus(
+                message.id,
+                batch.providerId,
+                message.providerMessageId,
+                batchId, // 传递批次ID
+              );
+
+            if (statusResult.success) {
+              // 更新消息状态
+              await this.smsMessageRepository.update(message.id, {
+                status: statusResult.status as SmsStatus,
+                statusUpdateTime: statusResult.statusUpdateTime || new Date(),
+                errorMessage: statusResult.errorMessage || null,
+              });
+
+              // 根据状态更新计数
+              if (
+                statusResult.status === 'delivered' ||
+                statusResult.status === 'sent'
+              ) {
+                bukaSuccess++;
+              } else if (
+                statusResult.status === 'failed' ||
+                statusResult.status === 'rejected'
+              ) {
+                bukaFail++;
+              }
+
+              this.logger.debug(
+                `已更新消息 ${message.id} 状态为 ${statusResult.status}`,
+              );
+            }
+          } catch (error) {
+            this.logger.error(
+              `Error querying message status for message ${message.id}: ${error instanceof Error ? error.message : String(error)}`,
+            );
           }
-        } catch (error) {
-          this.logger.error(
-            `Error querying message status for message ${message.id}: ${error instanceof Error ? error.message : String(error)}`,
-          );
         }
       }
+
+      // 记录从Buka更新统计到的数量
+      this.logger.log(
+        `从Buka状态查询统计 - 成功: ${bukaSuccess}, 失败: ${bukaFail}`,
+      );
+
+      // 只有当我们确实获取到了一些有效数据时，才更新批次状态
+      if (bukaSuccess > 0 || bukaFail > 0) {
+        // 强制更新批次计数和状态
+        let newStatus = batch.status; // 默认保持原状态
+
+        // 根据计数确定新状态
+        if (bukaFail > 0) {
+          newStatus = 'failed';
+        } else if (bukaSuccess > 0) {
+          newStatus = 'completed';
+        }
+
+        // 强制更新批次统计，无论当前状态如何
+        await this.smsBatchRepository.update(batchId, {
+          successCount: bukaSuccess,
+          failureCount: bukaFail,
+          processedCount: bukaSuccess + bukaFail,
+          status: newStatus,
+          processingCompletedAt: new Date(),
+        });
+
+        this.logger.log(
+          `已强制更新批次 ${batchId} - 成功: ${bukaSuccess}, 失败: ${bukaFail}, 状态: ${newStatus}`,
+        );
+        bukaDataUpdated = true;
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.logger.error(`刷新批次 ${batchId} 状态时出错: ${errorMsg}`);
+      // 发生错误时，将使用数据库中的现有数据
     }
 
-    // 重新获取批次和消息
-    await this.finalizeBatchStatus(batchId);
+    // 如果Buka数据更新失败，尝试使用finalizeBatchStatus更新批次状态
+    if (!bukaDataUpdated) {
+      this.logger.log(
+        `Buka数据更新失败或无数据，尝试从数据库更新批次 ${batchId} 状态`,
+      );
+      try {
+        await this.finalizeBatchStatus(batchId);
+      } catch (error) {
+        this.logger.warn(
+          `finalizeBatchStatus更新失败: ${error instanceof Error ? error.message : String(error)}`,
+        );
+        // 即使finalizeBatchStatus失败，也继续执行并返回当前数据
+      }
+    }
 
     // 返回更新后的批次详情
     return this.getSmsBatchDetail(userId, batchId);

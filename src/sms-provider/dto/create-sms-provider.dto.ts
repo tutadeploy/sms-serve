@@ -1,12 +1,15 @@
-import { IsNotEmpty, IsString, IsBoolean, IsOptional } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsBoolean,
+  IsOptional,
+  IsNumber,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-// Onbuka特定配置
+// Onbuka特定配置（不再包含appId）
 export class OnbukaConfigDto {
-  @ApiProperty({ description: 'Onbuka应用ID', example: '41uaKsL2' })
-  @IsNotEmpty()
-  @IsString()
-  appid!: string;
+  // 可以保留其他Onbuka特定配置，但不包含appId
 }
 
 export class CreateSmsProviderDto {
@@ -14,6 +17,12 @@ export class CreateSmsProviderDto {
   @IsNotEmpty()
   @IsString()
   name!: string;
+
+  // 新增租户ID字段
+  @ApiProperty({ description: '关联的租户ID', example: 1 })
+  @IsNotEmpty()
+  @IsNumber()
+  tenantId!: number;
 
   @ApiProperty({ description: '供应商显示名称', example: 'Onbuka SMS服务' })
   @IsString()
@@ -37,9 +46,11 @@ export class CreateSmsProviderDto {
   @IsString()
   baseUrl: string = 'https://api.onbuka.com';
 
-  @ApiProperty({ description: '供应商特定配置', type: OnbukaConfigDto })
-  @IsNotEmpty()
-  configDetails!: Record<string, any>;
+  @ApiPropertyOptional({
+    description: '供应商特定配置(不含appId)',
+  })
+  @IsOptional()
+  configDetails?: Record<string, any>;
 
   @ApiPropertyOptional({ description: '是否启用', example: true })
   @IsOptional()

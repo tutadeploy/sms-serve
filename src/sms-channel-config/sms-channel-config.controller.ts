@@ -5,12 +5,10 @@ import {
   Get,
   Body,
   Query,
-  HttpStatus,
-  HttpCode,
   Logger,
   ParseIntPipe,
   UseGuards,
-  Request,
+  Req,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,9 +19,6 @@ import {
 import { SmsChannelConfigService } from './sms-channel-config.service';
 import { SetChannelDto } from './dto/set-channel.dto';
 import { SetBukaUserConfigDto } from './dto/set-buka-user-config.dto';
-import { RequirePermissions } from '../auth/decorators/require-permissions.decorator';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Request as ExpressRequest } from 'express';
 import { BukaBalanceResponseDto } from './dto/buka-balance-response.dto';
 import { UserService } from '../user/user.service';
 import { TenantService } from '../tenant/tenant.service';
@@ -31,13 +26,17 @@ import {
   BusinessException,
   BusinessErrorCode,
 } from '../common/exceptions/business.exception';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Request } from 'express';
 
-interface RequestWithUser extends ExpressRequest {
+// 定义包含用户信息的请求类型
+interface RequestWithUser extends Request {
   user: {
     userId: number;
     username: string;
-    role: string;
-    tenantId: number;
+    roles?: string[];
+    tenantId?: number;
+    sub?: number;
   };
 }
 
@@ -53,49 +52,84 @@ export class SmsChannelConfigController {
   ) {}
 
   @Put('update')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '更新租户渠道配置' })
+  @ApiOperation({ summary: '设置租户的渠道配置' })
   @ApiResponse({
-    status: HttpStatus.OK,
-    description: '配置成功',
-    schema: { example: {} },
+    status: 200,
+    description: '成功',
+    schema: {
+      type: 'object',
+      properties: {
+        code: { type: 'number', example: 0 },
+        message: { type: 'string', example: '设置成功' },
+        data: {
+          type: 'object',
+          properties: {
+            id: { type: 'number', example: 1 },
+            channel: { type: 'string', example: 'buka' },
+            isActive: { type: 'boolean', example: true },
+          },
+        },
+      },
+    },
   })
-  @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
-    description: '参数错误或渠道不支持',
-  })
-  async setTenantChannel(
-    @Body() dto: SetChannelDto,
-    @Query('tenantId', ParseIntPipe) tenantId: number,
-  ): Promise<void> {
-    this.logger.debug(`更新租户渠道配置: ${JSON.stringify(dto)}`);
+  async setChannel(
+    @Body() setChannelDto: SetChannelDto,
+    @Query('tenantId', new ParseIntPipe()) tenantId: number,
+  ) {
+    this.logger.debug(`更新租户渠道配置: ${JSON.stringify(setChannelDto)}`);
     if (!tenantId) {
       throw new Error('Tenant ID is required');
     }
 
+    // 获取baseUrl (如果在configDetails中提供)
+    const baseUrl = setChannelDto.configDetails?.baseUrl;
+
+    // 将ConfigDetailsDto转换为Record<string, unknown>
+    const configDetails = setChannelDto.configDetails
+      ? { ...(setChannelDto.configDetails as Record<string, unknown>) }
+      : undefined;
+
     await this.smsChannelConfigService.setTenantChannelConfig(
       tenantId,
-      dto.channel,
-      dto.apiKey,
-      dto.apiSecret,
-      dto.baseUrl,
+      setChannelDto.channel,
+      setChannelDto.apiKey,
+      setChannelDto.apiSecret,
+      baseUrl,
+      configDetails,
     );
     // 成功时不返回 body，符合 PUT 规范
   }
 
-  @Post('set-sms-buka')
-  @ApiOperation({ summary: '设置用户Buka配置' })
-  @ApiResponse({ status: 200, description: '配置成功' })
-  @ApiResponse({ status: 400, description: '参数错误' })
-  @ApiResponse({ status: 404, description: '用户或租户不存在' })
-  @HttpCode(HttpStatus.OK)
-  async setUserBukaConfig(@Body() dto: SetBukaUserConfigDto): Promise<void> {
-    this.logger.log(
-      `设置用户 ${dto.username} (租户 ${dto.tenantName}) 的Buka配置`,
-    );
+  @Post('buka/user-config')
+  @ApiOperation({ summary: '设置用户的Buka渠道配置' })
+  @ApiResponse({
+    status: 200,
+    description: '成功',
+    schema: {
+      type: 'object',
+      properties: {
+        code: { type: 'number', example: 0 },
+        message: { type: 'string', example: '设置成功' },
+        data: {
+          type: 'object',
+          properties: {
+            id: { type: 'number', example: 1 },
+            appId: { type: 'string', example: '123456' },
+            isActive: { type: 'boolean', example: true },
+          },
+        },
+      },
+    },
+  })
+  async setBukaUserConfig(
+    @Body() dto: SetBukaUserConfigDto,
+    @Query('tenantId', ParseIntPipe) tenantId: number,
+    @Query('userId', ParseIntPipe) userId: number,
+  ): Promise<void> {
+    this.logger.log(`设置用户Buka配置: ${JSON.stringify(dto)}`);
 
-    // 首先获取用户和租户信息
-    const user = await this.userService.findByUsername(dto.username);
+    // 验证用户和租户
+    const user = await this.userService.findOne(userId);
     if (!user) {
       throw new BusinessException(
         '用户不存在',
@@ -103,7 +137,7 @@ export class SmsChannelConfigController {
       );
     }
 
-    const tenant = await this.tenantService.findByName(dto.tenantName);
+    const tenant = await this.tenantService.findOne(tenantId);
     if (!tenant) {
       throw new BusinessException(
         '租户不存在',
@@ -111,11 +145,11 @@ export class SmsChannelConfigController {
       );
     }
 
-    // 设置用户的Buka配置
+    // 设置用户渠道配置
     await this.smsChannelConfigService.setUserChannelConfig(
       user.id,
       tenant.id,
-      'buka',
+      'onbuka',
       { appId: dto.appId },
     );
   }
@@ -123,12 +157,12 @@ export class SmsChannelConfigController {
   @Get('supported-countries/list')
   @ApiOperation({ summary: '获取渠道支持的国家列表' })
   @ApiResponse({
-    status: HttpStatus.OK,
+    status: 200,
     description: '查询成功',
     schema: { example: [{ code: 'JP', dialCode: '+81', name: 'Japan' }] },
   })
   @ApiResponse({
-    status: HttpStatus.BAD_REQUEST,
+    status: 400,
     description: '渠道不支持或不存在',
   })
   async getSupportedCountries(@Query('channel') channel: string) {
@@ -159,13 +193,25 @@ export class SmsChannelConfigController {
       },
     },
   })
-  @RequirePermissions('system:sms:balance')
   async getBukaBalance(
-    @Request() req: RequestWithUser,
+    @Req() req: RequestWithUser,
+    @Query('tenantId') tenantIdQuery?: string,
   ): Promise<{ balance: number }> {
+    const userId = req.user.userId || req.user.sub;
+    // 优先使用URL查询参数中的tenantId，如果没有则使用JWT中的
+    const tenantId = tenantIdQuery
+      ? parseInt(tenantIdQuery, 10)
+      : req.user.tenantId || 1; // 如果JWT中也没有，默认使用1
+
+    this.logger.log(`获取Buka余额，用户ID: ${userId}, 租户ID: ${tenantId}`);
+
+    if (!userId) {
+      throw new Error('无法获取用户ID');
+    }
+
     const result = await this.smsChannelConfigService.getBukaBalance(
-      req.user.tenantId,
-      req.user.userId,
+      tenantId,
+      userId,
     );
     return result;
   }

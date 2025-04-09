@@ -1,31 +1,54 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  ValidateNested,
+  IsObject,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+
+export class ConfigDetailsDto {
+  @ApiProperty({ description: '服务商基础URL（可选）', required: false })
+  @IsString()
+  @IsOptional()
+  baseUrl?: string;
+
+  @ApiProperty({ description: '服务商APP ID（可选）', required: false })
+  @IsString()
+  @IsOptional()
+  appId?: string;
+
+  // 可以添加其他特定字段
+}
 
 /**
  * 设置租户渠道配置DTO
  */
 export class SetChannelDto {
-  @ApiProperty({ description: '渠道标识', example: 'buka' })
+  @ApiProperty({ description: '渠道名称，如 buka', required: true })
   @IsString()
   @IsNotEmpty()
-  channel!: string;
+  channel: string;
 
-  @ApiProperty({ description: 'API Key', example: 'your-api-key' })
+  @ApiProperty({ description: 'API密钥', required: true })
   @IsString()
   @IsNotEmpty()
-  apiKey!: string;
+  apiKey: string;
 
-  @ApiProperty({ description: 'API Secret', example: 'your-api-secret' })
+  @ApiProperty({ description: 'API密钥密文', required: true })
   @IsString()
   @IsNotEmpty()
-  apiSecret!: string;
+  apiSecret: string;
 
   @ApiProperty({
-    description: '可选的API基础URL',
+    description: '额外配置信息',
     required: false,
-    example: 'https://api.example.com',
+    type: ConfigDetailsDto,
   })
-  @IsString()
+  @IsObject()
   @IsOptional()
-  baseUrl?: string;
+  @ValidateNested()
+  @Type(() => ConfigDetailsDto)
+  configDetails?: ConfigDetailsDto;
 }
