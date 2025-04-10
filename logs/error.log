@@ -234,3 +234,6 @@
 {"context":"BukaService","level":"error","message":"按时间范围查询Buka短信状态时出错: Request failed with status code 404","ms":"+0ms","stack":[null],"timestamp":"2025-04-09T21:53:52.275Z"}
 {"context":"BukaService","level":"error","message":"完整错误详情: {\"status\":404,\"statusText\":\"\",\"data\":{\"timestamp\":1744235631582,\"status\":404,\"error\":\"Not Found\",\"path\":\"/v3/querySmsByTime\"}}","ms":"+0ms","stack":[null],"timestamp":"2025-04-09T21:53:52.276Z"}
 {"context":"SmsDispatcherService","level":"error","message":"Error querying message status by batch: Buka API时间范围查询错误: Request failed with status code 404","ms":"+0ms","stack":[null],"timestamp":"2025-04-09T21:53:52.276Z"}
+{"context":"NestApplication","level":"error","message":"Error: listen EADDRINUSE: address already in use 0.0.0.0:3000","ms":"+1ms","stack":[null],"timestamp":"2025-04-09T23:45:57.513Z"}
+{"context":"NestApplication","level":"error","message":"Error: listen EADDRINUSE: address already in use 0.0.0.0:3000","ms":"+0ms","stack":[null],"timestamp":"2025-04-10T12:51:21.432Z"}
+{"context":"NestApplication","level":"error","message":"Error: listen EADDRINUSE: address already in use 0.0.0.0:3000","ms":"+1ms","stack":[null],"timestamp":"2025-04-10T13:40:12.539Z"}

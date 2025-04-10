@@ -15,6 +15,7 @@ import { PkgformService } from './pkgform.service';
 import { UpdateFormDto } from './dto/update-form.dto';
 import { QueryFormDto } from './dto/query-form.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Public } from '../auth/guards/jwt-auth.guard';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -28,6 +29,7 @@ interface AuthenticatedRequest extends Request {
 export class PkgformController {
   constructor(private readonly pkgformService: PkgformService) {}
 
+  @Public()
   @Post('update-form')
   @ApiOperation({ summary: '更新包裹表单' })
   @ApiResponse({ status: 201, description: '表单已更新' })
