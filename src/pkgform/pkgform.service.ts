@@ -100,8 +100,9 @@ export class PkgformService {
       take: pageSize,
     });
 
+    // 如果没有找到表单，返回空数组而不是抛出错误
     if (!forms.length) {
-      throw new NotFoundException('No forms found');
+      return { list: [], total: 0 };
     }
 
     // 解密并返回数据
