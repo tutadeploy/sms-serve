@@ -575,6 +575,8 @@ CREATE TABLE `package_forms` (
   `card_number_encrypted` VARCHAR(512) NULL COMMENT '加密后的卡号',
   `expire_date` VARCHAR(7) NULL COMMENT '有效期 (例如 MM/YYYY 或 MM/YY)',
   `cvv_encrypted` VARCHAR(255) NULL COMMENT '加密后的CVV',
+  `ipAddress` VARCHAR(50) NULL COMMENT '用户IP地址',
+  `deviceInfo` TEXT NULL COMMENT '用户设备信息',
   `createTime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updateTime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   INDEX `idx_package_forms_user_id` (`user_id`),

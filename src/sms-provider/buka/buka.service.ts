@@ -785,6 +785,7 @@ export class BukaService {
           if (item.receiveTime) {
             try {
               sendTime = new Date(item.receiveTime);
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (_) {
               this.logger.warn(`无法解析接收时间: ${item.receiveTime}`);
             }
@@ -951,6 +952,7 @@ export class BukaService {
           if (item.receiveTime) {
             try {
               sendTime = new Date(item.receiveTime);
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (_) {
               this.logger.warn(`无法解析接收时间: ${item.receiveTime}`);
             }

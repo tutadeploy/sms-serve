@@ -301,6 +301,7 @@ export class TemplateService {
       pageNo = 1,
       pageSize = 10,
       name,
+      content,
       createStartTime,
       createEndTime,
     } = queryDto;
@@ -317,6 +318,9 @@ export class TemplateService {
     const whereConditions: FindOptionsWhere<SmsTemplate> = { tenantId };
     if (name) {
       whereConditions.name = Like(`%${name}%`);
+    }
+    if (content) {
+      whereConditions.content = Like(`%${content}%`);
     }
     if (createStartTime && createEndTime) {
       whereConditions.createTime = Between(

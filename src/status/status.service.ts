@@ -18,6 +18,7 @@ import { SmsReceivedMessagePageReqDto } from './dto/sms-received-message-page.dt
 import { EmailReceivedMessage } from '../email-received-message/entities/email-received-message.entity';
 import { EmailReceivedMessagePageReqDto } from './dto/email-received-message-page.dto';
 import { SmsMessageResponseDto } from '../sms/dto/sms-service-response.dto';
+import { SmsMessageStatus } from './dto/sms-message-page.dto';
 
 @Injectable()
 export class StatusService {
@@ -232,7 +233,7 @@ export class StatusService {
     }
 
     // 添加其他过滤条件
-    if (query.status) {
+    if (query.status && query.status !== SmsMessageStatus.ALL) {
       queryBuilder.andWhere('message.status = :status', {
         status: query.status,
       });
@@ -247,6 +248,18 @@ export class StatusService {
     if (query.batchId) {
       queryBuilder.andWhere('batch.id = :batchId', {
         batchId: query.batchId,
+      });
+    }
+
+    if (query.sendTimeStart) {
+      queryBuilder.andWhere('message.sendTime >= :sendTimeStart', {
+        sendTimeStart: query.sendTimeStart,
+      });
+    }
+
+    if (query.sendTimeEnd) {
+      queryBuilder.andWhere('message.sendTime <= :sendTimeEnd', {
+        sendTimeEnd: query.sendTimeEnd,
       });
     }
 

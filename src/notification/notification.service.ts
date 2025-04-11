@@ -12,6 +12,7 @@ import {
   Between,
   MoreThanOrEqual,
   LessThanOrEqual,
+  Like,
 } from 'typeorm';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
@@ -636,12 +637,19 @@ export class NotificationService {
       pageSize = 10,
       createStartTime,
       createEndTime,
+      batchId,
     } = queryDto;
     const skip = (pageNo - 1) * pageSize;
 
     const whereConditions: Record<string, any> = { userId };
 
-    if (status) {
+    // Apply batchId filter only if it's a non-empty string
+    if (batchId && batchId.trim() !== '') {
+      whereConditions.id = Like(`%${batchId}%`);
+    }
+
+    // Apply status filter only if it's a non-empty string
+    if (status && status.trim() !== '') {
       whereConditions.status = status;
     }
 

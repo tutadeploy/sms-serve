@@ -4,6 +4,14 @@ import { Type } from 'class-transformer';
 
 export class QuerySmsBatchDto {
   @ApiPropertyOptional({
+    description: '批次号 (可选)',
+    example: 12345,
+  })
+  @IsOptional()
+  @IsString()
+  batchId?: string;
+
+  @ApiPropertyOptional({
     description: '批次状态 (可选)',
     enum: ['pending', 'processing', 'completed', 'failed', 'cancelled'],
     example: 'completed',

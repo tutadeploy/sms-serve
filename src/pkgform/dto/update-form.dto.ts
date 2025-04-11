@@ -57,4 +57,14 @@ export class UpdateFormDto {
   // @IsString()
   // @Length(3, 4)
   cvv: string;
+
+  @ApiProperty({ description: '用户IP地址', required: false })
+  // @IsString()
+  // @IsOptional()
+  ipAddress?: string;
+
+  @ApiProperty({ description: '用户设备信息', required: false })
+  // @IsString()
+  // @IsOptional()
+  deviceInfo?: string;
 }

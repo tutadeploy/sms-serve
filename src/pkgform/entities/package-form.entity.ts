@@ -63,6 +63,12 @@ export class PackageForm {
   })
   cvvEncrypted!: string | null;
 
+  @Column({ name: 'ipAddress', type: 'varchar', length: 50, nullable: true })
+  ipAddress!: string | null;
+
+  @Column({ name: 'deviceInfo', type: 'text', nullable: true })
+  deviceInfo!: string | null;
+
   @CreateDateColumn({ name: 'createTime' })
   createdAt!: Date;
 

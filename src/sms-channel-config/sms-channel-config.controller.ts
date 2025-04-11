@@ -267,7 +267,9 @@ export class SmsChannelConfigController {
         );
 
         // 转换查询结果为定义的类型
-        const users: UserQueryResult[] = results as UserQueryResult[];
+
+        const users: UserQueryResult[] =
+          results as unknown as UserQueryResult[];
 
         if (users && users.length > 0) {
           const foundUser: UserQueryResult = users[0];

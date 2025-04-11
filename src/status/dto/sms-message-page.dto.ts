@@ -5,6 +5,7 @@ import { PaginationDto } from '../../common/dto/pagination.dto';
 
 // 可以根据实际表结构定义更多的状态
 export enum SmsMessageStatus {
+  ALL = 'all',
   PENDING = 'pending',
   SENT = 'sent',
   DELIVERED = 'delivered',
@@ -45,4 +46,20 @@ export class SmsMessagePageReqDto extends PaginationDto {
   @Type(() => Number)
   @IsInt()
   tenantId?: number;
+
+  @ApiPropertyOptional({
+    description: '发送时间开始',
+    example: '2023-01-01T00:00:00.000Z',
+  })
+  @IsOptional()
+  @Type(() => Date)
+  sendTimeStart?: Date;
+
+  @ApiPropertyOptional({
+    description: '发送时间结束',
+    example: '2023-01-31T23:59:59.999Z',
+  })
+  @IsOptional()
+  @Type(() => Date)
+  sendTimeEnd?: Date;
 }
