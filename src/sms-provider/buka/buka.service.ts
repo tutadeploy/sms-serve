@@ -134,24 +134,41 @@ export class BukaService {
       throw new Error('Buka authentication is not configured for this tenant');
     }
 
-    // 获取用户渠道配置（appId）
-    const userConfig = await this.userChannelConfigRepository.findOne({
-      where: { userId, channel: 'onbuka', isActive: true },
-    });
+    // 尝试获取用户渠道配置（appId）
+    let appId: string | undefined;
+    try {
+      const userConfig = await this.userChannelConfigRepository.findOne({
+        where: { userId, channel: 'onbuka', isActive: true },
+      });
 
-    if (!userConfig || !userConfig.configDetails) {
-      throw new Error('Invalid user channel config structure');
+      if (userConfig?.configDetails && 'appId' in userConfig.configDetails) {
+        const configAppId = userConfig.configDetails.appId;
+        if (typeof configAppId === 'string') {
+          appId = configAppId;
+          this.logger.debug(`Found appId in user config: ${appId}`);
+        }
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.warn(`Error fetching user channel config: ${errorMessage}`);
+      // 继续使用租户配置
     }
 
-    const { appId } = userConfig.configDetails;
-    if (typeof appId !== 'string') {
-      this.logger.error('Invalid appId in configDetails', {
-        hasConfigDetails: !!userConfig.configDetails,
-        hasAppId: 'appId' in userConfig.configDetails,
-        appIdType: typeof appId,
-        configValue: userConfig.configDetails,
-      });
-      throw new Error('Buka appId not found or invalid in user channel config');
+    // 如果用户配置中没有找到有效的appId，尝试从租户配置获取
+    if (!appId && tenantConfig.configDetails) {
+      if ('appId' in tenantConfig.configDetails) {
+        const tenantAppId = tenantConfig.configDetails.appId;
+        if (typeof tenantAppId === 'string') {
+          appId = tenantAppId;
+          this.logger.debug(`Using tenant appId as fallback: ${appId}`);
+        }
+      }
+    }
+
+    // 如果仍然没有找到appId，抛出错误
+    if (!appId) {
+      throw new Error('No appId found in user or tenant channel config');
     }
 
     // 组合来自不同表的配置信息

@@ -154,16 +154,64 @@ export class SmsChannelConfigService {
       // 验证渠道是否存在
       this.getChannelService(channel);
 
+      // 验证用户ID是否存在
+      try {
+        const user = await this.userService.findOne(userId);
+        this.logger.debug(
+          `验证用户ID ${userId} 存在，用户名: ${user.username}`,
+        );
+      } catch (error) {
+        this.logger.error(
+          `用户ID ${userId} 不存在或无法验证: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+
+      this.logger.debug(
+        `设置用户渠道配置 - 用户ID: ${userId}, 租户ID: ${tenantId}, 渠道: ${channel}, 配置: ${JSON.stringify(
+          configDetails,
+        )}`,
+      );
+
+      // 使用更精确的查询，确保找到正确的用户记录
       const existingConfig = await this.userChannelConfigRepository.findOne({
-        where: { userId, channel },
+        where: {
+          userId: userId,
+          channel: channel,
+        },
       });
 
       if (existingConfig) {
+        this.logger.debug(
+          `找到现有配置 ID: ${existingConfig.id}, 用户ID: ${existingConfig.userId}, 租户ID: ${existingConfig.tenantId}`,
+        );
+
+        // 确保tenantId也是最新的
+        existingConfig.tenantId = tenantId;
         existingConfig.configDetails = configDetails;
         existingConfig.isActive = true;
-        return this.userChannelConfigRepository.save(existingConfig);
+
+        const savedConfig =
+          await this.userChannelConfigRepository.save(existingConfig);
+        this.logger.debug(
+          `更新配置成功，ID: ${savedConfig.id}, 用户ID: ${savedConfig.userId}`,
+        );
+        return savedConfig;
       }
 
+      // 检查是否有任何使用相同用户ID的记录（无论渠道）
+      const anyUserConfig = await this.userChannelConfigRepository.findOne({
+        where: { userId: userId },
+      });
+
+      if (anyUserConfig) {
+        this.logger.debug(
+          `用户ID ${userId} 有其他配置记录 ID: ${anyUserConfig.id}，渠道: ${anyUserConfig.channel}`,
+        );
+      } else {
+        this.logger.debug(`用户ID ${userId} 没有任何现有配置记录`);
+      }
+
+      this.logger.debug(`未找到现有配置，创建新配置`);
       const newConfig = this.userChannelConfigRepository.create({
         userId,
         tenantId,
@@ -172,7 +220,17 @@ export class SmsChannelConfigService {
         isActive: true,
       });
 
-      return this.userChannelConfigRepository.save(newConfig);
+      // 确认创建的配置数据
+      this.logger.debug(
+        `准备保存新配置 - 用户ID: ${newConfig.userId}, 租户ID: ${newConfig.tenantId}, 渠道: ${newConfig.channel}`,
+      );
+
+      const savedConfig =
+        await this.userChannelConfigRepository.save(newConfig);
+      this.logger.debug(
+        `创建配置成功，ID: ${savedConfig.id}, 用户ID: ${savedConfig.userId}, 租户ID: ${savedConfig.tenantId}`,
+      );
+      return savedConfig;
     } catch (error) {
       if (error instanceof BusinessException) {
         throw error;

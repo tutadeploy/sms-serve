@@ -122,26 +122,45 @@ export class UserService {
    * @returns 用户对象
    */
   async findByUsername(username: string): Promise<User> {
-    const user = await this.userRepository.findOne({
-      where: { username },
-      select: [
-        'id',
-        'username',
-        'email',
-        'passwordHash',
-        'role',
-        'isActive',
-        'tenantId',
-        'createTime',
-        'updateTime',
-      ],
-    });
+    this.logger.log(`尝试通过用户名查找用户: "${username}"`);
 
-    if (!user) {
-      throw new NotFoundException(`用户名 ${username} 不存在`);
+    try {
+      // 使用更直接的查询方式
+      const user = await this.userRepository
+        .createQueryBuilder('user')
+        .where('user.username = :username', { username })
+        .select([
+          'user.id',
+          'user.username',
+          'user.email',
+          'user.passwordHash',
+          'user.role',
+          'user.isActive',
+          'user.tenantId',
+          'user.createTime',
+          'user.updateTime',
+        ])
+        .getOne();
+
+      if (!user) {
+        this.logger.warn(`未找到用户名为 "${username}" 的用户`);
+        throw new NotFoundException(`用户名 ${username} 不存在`);
+      }
+
+      this.logger.log(
+        `成功找到用户: ${username}, ID: ${user.id}, 角色: ${user.role}`,
+      );
+      return user;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+
+      this.logger.error(
+        `查询用户发生错误: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw new NotFoundException(`查询用户 ${username} 失败`);
     }
-
-    return user;
   }
 
   /**

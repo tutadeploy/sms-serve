@@ -28,6 +28,8 @@ import {
 } from '../common/exceptions/business.exception';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Request } from 'express';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { UserRole } from '../user/entities/user.entity';
 
 // 定义包含用户信息的请求类型
 interface RequestWithUser extends Request {
@@ -38,6 +40,14 @@ interface RequestWithUser extends Request {
     tenantId?: number;
     sub?: number;
   };
+}
+
+// 定义用户查询结果接口
+interface UserQueryResult {
+  id: number;
+  username: string;
+
+  [key: string]: any;
 }
 
 @ApiTags('渠道配置')
@@ -214,5 +224,105 @@ export class SmsChannelConfigController {
       userId,
     );
     return result;
+  }
+
+  @Post('set-sms-buka')
+  @ApiOperation({ summary: '设置用户的Buka appId (无需认证)' })
+  @ApiResponse({
+    status: 200,
+    description: '成功',
+    schema: {
+      type: 'object',
+      properties: {
+        id: { type: 'number', example: 1 },
+        appId: { type: 'string', example: 'sWqvxdRZ' },
+        isActive: { type: 'boolean', example: true },
+      },
+    },
+  })
+  async setSmsBuka(
+    @Body() dto: SetBukaUserConfigDto,
+  ): Promise<{ id: number; appId: string; isActive: boolean }> {
+    this.logger.log(`设置用户Buka配置(无需认证): ${JSON.stringify(dto)}`);
+
+    try {
+      // 通过租户名称查找租户
+      const tenant = await this.tenantService.findByName(dto.tenantName);
+      if (!tenant) {
+        throw new BusinessException(
+          `租户 ${dto.tenantName} 不存在`,
+          BusinessErrorCode.TENANT_NOT_FOUND,
+        );
+      }
+
+      let user;
+      try {
+        // 尝试通过用户名查找用户
+        this.logger.log(`尝试查找用户名: "${dto.username}" (不区分大小写)`);
+
+        // 使用SQL查询用户（不区分大小写）
+        const results = await this.userService['userRepository'].query(
+          `SELECT * FROM users WHERE LOWER(username) = LOWER(?)`,
+          [dto.username],
+        );
+
+        // 转换查询结果为定义的类型
+        const users: UserQueryResult[] = results as UserQueryResult[];
+
+        if (users && users.length > 0) {
+          const foundUser: UserQueryResult = users[0];
+          this.logger.log(
+            `通过SQL找到用户: ${dto.username}, 实际用户名: ${foundUser.username}, ID: ${foundUser.id}`,
+          );
+
+          // 获取完整用户对象
+          user = await this.userService.findOne(foundUser.id);
+        } else {
+          this.logger.log(`SQL查询未找到用户: ${dto.username}`);
+          throw new Error(`用户 ${dto.username} 不存在`);
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (error) {
+        // 用户不存在，返回错误
+        this.logger.log(`用户 ${dto.username} 不存在`);
+        throw new BusinessException(
+          `用户 ${dto.username} 不存在`,
+          BusinessErrorCode.USER_NOT_FOUND,
+        );
+      }
+
+      this.logger.log(
+        `为用户ID ${user.id} 设置Buka配置，租户ID: ${tenant.id}, appId: ${dto.appId}`,
+      );
+
+      // 设置用户渠道配置
+      const config = await this.smsChannelConfigService.setUserChannelConfig(
+        user.id,
+        tenant.id,
+        'onbuka',
+        { appId: dto.appId },
+      );
+
+      this.logger.log(
+        `成功为用户 ${dto.username} (ID: ${user.id}) 设置Buka配置，配置ID: ${config.id}, appId: ${dto.appId}`,
+      );
+
+      return {
+        id: config.id,
+        appId: dto.appId,
+        isActive: config.isActive,
+      };
+    } catch (error: unknown) {
+      this.logger.error(
+        `设置用户Buka配置失败: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      if (error instanceof BusinessException) {
+        throw error;
+      }
+      throw new BusinessException(
+        `设置用户Buka配置失败: ${error instanceof Error ? error.message : String(error)}`,
+        BusinessErrorCode.CHANNEL_CONFIG_ERROR,
+      );
+    }
   }
 }

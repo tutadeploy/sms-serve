@@ -215,7 +215,7 @@ export class StatusService {
         });
       }
     } else {
-      // 非管理员只能查看自己租户的消息
+      // 非管理员只能查看自己租户的消息且只能查看自己的消息
       if (!user.tenantId) {
         throw new BusinessException(
           'User has no associated tenant',
@@ -224,6 +224,10 @@ export class StatusService {
       }
       queryBuilder.andWhere('batchUser.tenantId = :tenantId', {
         tenantId: user.tenantId,
+      });
+      // 添加用户ID过滤，确保只能看到自己发送的消息
+      queryBuilder.andWhere('batch.userId = :userId', {
+        userId: userId,
       });
     }
 

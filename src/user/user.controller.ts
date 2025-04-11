@@ -24,13 +24,13 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UserListPageDto } from './dto/user-list-page.dto';
 import { QueryUserPageDto } from './dto/query-user-page.dto';
-import { AuthGuard } from '@nestjs/passport';
 import { User } from './entities/user.entity';
+import { Public, JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('用户管理')
 @ApiBearerAuth()
 @Controller('system/users')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(JwtAuthGuard)
 export class UserController {
   private readonly logger = new Logger(UserController.name);
 
@@ -51,6 +51,7 @@ export class UserController {
   }
 
   @Post()
+  @Public()
   @ApiOperation({ summary: '创建用户' })
   @ApiResponse({ status: 201, type: UserResponseDto })
   async create(@Body() createUserDto: CreateUserDto): Promise<UserResponseDto> {
