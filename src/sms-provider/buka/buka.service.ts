@@ -283,11 +283,11 @@ export class BukaService {
           throw new Error(warningMessage);
         }
 
-        // 按照 400:270 的比例转换余额
-        const convertedBalance = (originalBalance * 270) / 400;
+        // 按照 27:50 的比例转换余额
+        const convertedBalance = (originalBalance * 50) / 27;
 
         this.logger.log(`Buka original balance: ${originalBalance}`);
-        this.logger.log(`Converted balance (400:270): ${convertedBalance}`);
+        this.logger.log(`Converted balance (27:50): ${convertedBalance}`);
 
         // 返回值为简单对象 { balance }，全局拦截器会自动封装为 { code, message, data: { balance } }
         return { balance: convertedBalance };
@@ -367,11 +367,11 @@ export class BukaService {
           throw new Error(warningMessage);
         }
 
-        // 按照 400:270 的比例转换余额
-        const convertedBalance = (originalBalance * 270) / 400;
+        // 按照 27:50 的比例转换余额
+        const convertedBalance = (originalBalance * 50) / 27;
 
         this.logger.log(`Buka original balance: ${originalBalance}`);
-        this.logger.log(`Converted balance (400:270): ${convertedBalance}`);
+        this.logger.log(`Converted balance (27:50): ${convertedBalance}`);
 
         // 返回值为简单对象 { balance }，全局拦截器会自动封装为 { code, message, data: { balance } }
         return { balance: convertedBalance };
