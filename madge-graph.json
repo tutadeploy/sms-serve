@@ -1,0 +1,906 @@
+{
+  "account/account.controller.ts": [],
+  "account/account.module.ts": [
+    "account/account.controller.ts",
+    "account/account.service.ts",
+    "account/entities/account.entity.ts"
+  ],
+  "account/account.service.ts": [],
+  "account/entities/account.entity.ts": [
+    "user/entities/user.entity.ts"
+  ],
+  "app.controller.spec.ts": [
+    "app.controller.ts",
+    "app.service.ts"
+  ],
+  "app.controller.ts": [
+    "app.service.ts"
+  ],
+  "app.module.ts": [
+    "account/account.module.ts",
+    "app.controller.ts",
+    "app.service.ts",
+    "auth/auth.module.ts",
+    "captcha/captcha.module.ts",
+    "common/config/typeorm.config.ts",
+    "config/index.ts",
+    "email-message/email-message.module.ts",
+    "email-notification-batch/email-notification-batch.module.ts",
+    "email-received-message/email-received-message.module.ts",
+    "email-template/email-template.module.ts",
+    "notification/notification.module.ts",
+    "payment/payment.module.ts",
+    "pkgform/pkgform.module.ts",
+    "sms-batch/sms-batch.module.ts",
+    "sms-channel-config/sms-channel-config.module.ts",
+    "sms-message/sms-message.module.ts",
+    "sms-notification-batch/sms-notification-batch.module.ts",
+    "sms-provider/sms-provider.module.ts",
+    "sms-received-message/sms-received-message.module.ts",
+    "sms/sms.module.ts",
+    "sso/sso.module.ts",
+    "status/status.module.ts",
+    "system/dict.module.ts",
+    "system/notify-message.module.ts",
+    "template/template.module.ts",
+    "tenant/tenant.module.ts",
+    "user/user.module.ts"
+  ],
+  "app.service.ts": [],
+  "auth/auth.controller.spec.ts": [
+    "auth/auth.controller.ts",
+    "auth/auth.service.ts",
+    "auth/dto/login-user.dto.ts",
+    "auth/strategies/local.strategy.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "auth/auth.controller.ts": [
+    "auth/auth.service.ts",
+    "auth/dto/login-response.dto.ts",
+    "auth/dto/login-user.dto.ts",
+    "auth/dto/logout-request.dto.ts",
+    "auth/dto/permission-info.dto.ts",
+    "auth/dto/refresh-token.dto.ts",
+    "auth/dto/user-profile-response.dto.ts",
+    "auth/guards/jwt-auth.guard.ts",
+    "common/dto/api-error-response.dto.ts"
+  ],
+  "auth/auth.module.ts": [
+    "auth/auth.controller.ts",
+    "auth/auth.service.ts",
+    "auth/entities/permission.entity.ts",
+    "auth/entities/role.entity.ts",
+    "auth/entities/user-token.entity.ts",
+    "auth/guards/refresh-token.guard.ts",
+    "auth/services/user-token.service.ts",
+    "auth/strategies/jwt.strategy.ts",
+    "sso/sso.module.ts",
+    "tenant/tenant.module.ts",
+    "user/entities/user.entity.ts",
+    "user/user.module.ts"
+  ],
+  "auth/auth.service.d.ts": [
+    "auth/strategies/local.strategy.ts",
+    "user/entities/user.entity.ts",
+    "user/user.service.ts"
+  ],
+  "auth/auth.service.spec.ts": [
+    "auth/auth.service.ts",
+    "user/entities/user.entity.ts",
+    "user/user.service.ts"
+  ],
+  "auth/auth.service.ts": [
+    "auth/dto/login-response.dto.ts",
+    "auth/dto/login-user.dto.ts",
+    "auth/dto/permission-info.dto.ts",
+    "auth/dto/refresh-token.dto.ts",
+    "auth/entities/permission.entity.ts",
+    "auth/entities/user-token.entity.ts",
+    "auth/strategies/jwt.strategy.ts",
+    "sso/sso.service.ts",
+    "tenant/tenant.service.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "auth/decorators/require-permissions.decorator.ts": [],
+  "auth/dto/login-response.dto.ts": [],
+  "auth/dto/login-user.dto.ts": [],
+  "auth/dto/logout-request.dto.ts": [],
+  "auth/dto/permission-info.dto.ts": [],
+  "auth/dto/refresh-token.dto.ts": [],
+  "auth/dto/user-profile-response.dto.ts": [],
+  "auth/entities/permission.entity.ts": [],
+  "auth/entities/role.entity.ts": [
+    "auth/entities/permission.entity.ts",
+    "tenant/entities/tenant.entity.ts"
+  ],
+  "auth/entities/user-token.entity.ts": [
+    "sso/entities/sso-session.entity.ts",
+    "tenant/entities/tenant.entity.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "auth/guards/jwt-auth.guard.spec.ts": [
+    "auth/guards/jwt-auth.guard.ts"
+  ],
+  "auth/guards/jwt-auth.guard.ts": [],
+  "auth/guards/refresh-token.guard.ts": [
+    "auth/auth.service.ts",
+    "sso/sso.service.ts"
+  ],
+  "auth/interfaces/request-with-user.interface.ts": [],
+  "auth/services/user-token.service.ts": [
+    "auth/entities/user-token.entity.ts",
+    "auth/strategies/jwt.strategy.ts",
+    "common/exceptions/business.exception.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "auth/strategies/jwt.strategy.spec.ts": [
+    "auth/auth.service.ts",
+    "auth/strategies/jwt.strategy.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "auth/strategies/jwt.strategy.ts": [
+    "auth/entities/user-token.entity.ts",
+    "user/user.service.ts"
+  ],
+  "auth/strategies/local.strategy.spec.ts": [
+    "auth/auth.service.ts",
+    "auth/strategies/local.strategy.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "auth/strategies/local.strategy.ts": [
+    "auth/auth.service.ts",
+    "auth/dto/login-response.dto.ts",
+    "auth/dto/login-user.dto.ts"
+  ],
+  "auth/strategies/refresh-token.strategy.ts": [
+    "auth/strategies/jwt.strategy.ts",
+    "user/user.service.ts"
+  ],
+  "captcha/captcha.controller.ts": [
+    "captcha/captcha.service.ts",
+    "captcha/dto/index.ts",
+    "captcha/interfaces/index.ts"
+  ],
+  "captcha/captcha.module.ts": [
+    "captcha/captcha.controller.ts",
+    "captcha/captcha.service.ts"
+  ],
+  "captcha/captcha.service.ts": [
+    "captcha/dto/index.ts",
+    "captcha/interfaces/index.ts"
+  ],
+  "captcha/dto/check-captcha.dto.ts": [
+    "captcha/dto/get-captcha.dto.ts"
+  ],
+  "captcha/dto/get-captcha.dto.ts": [],
+  "captcha/dto/index.ts": [
+    "captcha/dto/check-captcha.dto.ts",
+    "captcha/dto/get-captcha.dto.ts"
+  ],
+  "captcha/interfaces/captcha-result.interface.ts": [
+    "captcha/dto/get-captcha.dto.ts"
+  ],
+  "captcha/interfaces/index.ts": [
+    "captcha/interfaces/captcha-result.interface.ts"
+  ],
+  "common/channels/sms-channel.abstract.ts": [],
+  "common/config/logger.config.ts": [],
+  "common/config/typeorm.config.ts": [],
+  "common/constants/channel-status-codes.ts": [],
+  "common/constants/error-codes.ts": [],
+  "common/decorators/catch-error.decorator.ts": [
+    "common/exceptions/business.exception.ts",
+    "common/exceptions/error-handler.util.ts"
+  ],
+  "common/dto/api-error-response.dto.ts": [],
+  "common/dto/pagination-req.dto.ts": [],
+  "common/dto/pagination-res.dto.ts": [],
+  "common/dto/pagination.dto.ts": [],
+  "common/examples/error-handling-example.service.ts": [
+    "common/decorators/catch-error.decorator.ts",
+    "common/exceptions/business.exception.ts",
+    "common/exceptions/error-handler.util.ts"
+  ],
+  "common/exceptions/business.exception.ts": [],
+  "common/exceptions/error-handler.util.ts": [
+    "common/exceptions/business.exception.ts"
+  ],
+  "common/exceptions/global-exception.filter.ts": [
+    "common/exceptions/business.exception.ts"
+  ],
+  "common/filters/http-exception.filter.ts": [
+    "common/exceptions/business.exception.ts"
+  ],
+  "common/interceptors/response-transform.interceptor.ts": [],
+  "common/test/test-utils.ts": [],
+  "config/index.ts": [
+    "config/redis.config.ts"
+  ],
+  "config/redis.config.ts": [],
+  "data-source.ts": [
+    "common/config/typeorm.config.ts"
+  ],
+  "email-message/dto/email-message-response.dto.ts": [],
+  "email-message/email-message.module.ts": [
+    "email-message/email-message.service.ts",
+    "email-message/entities/email-message.entity.ts"
+  ],
+  "email-message/email-message.service.ts": [],
+  "email-message/entities/email-message.entity.ts": [
+    "email-notification-batch/entities/email-notification-batch.entity.ts"
+  ],
+  "email-notification-batch/email-notification-batch.module.ts": [
+    "email-notification-batch/email-notification-batch.service.ts",
+    "email-notification-batch/entities/email-notification-batch.entity.ts"
+  ],
+  "email-notification-batch/email-notification-batch.service.ts": [],
+  "email-notification-batch/entities/email-notification-batch.entity.ts": [
+    "email-message/entities/email-message.entity.ts",
+    "email-template/entities/email-template.entity.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "email-received-message/email-received-message.module.ts": [
+    "email-received-message/email-received-message.service.ts",
+    "email-received-message/entities/email-received-message.entity.ts"
+  ],
+  "email-received-message/email-received-message.service.ts": [],
+  "email-received-message/entities/email-received-message.entity.ts": [
+    "tenant/entities/tenant.entity.ts"
+  ],
+  "email-template/dto/email-template-response.dto.ts": [
+    "user/dto/user.dto.ts"
+  ],
+  "email-template/email-template.module.ts": [
+    "email-template/email-template.service.ts",
+    "email-template/entities/email-template.entity.ts"
+  ],
+  "email-template/email-template.service.ts": [],
+  "email-template/entities/email-template.entity.ts": [
+    "tenant/entities/tenant.entity.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "main.ts": [
+    "app.module.ts",
+    "common/config/logger.config.ts",
+    "common/exceptions/global-exception.filter.ts",
+    "common/filters/http-exception.filter.ts",
+    "common/interceptors/response-transform.interceptor.ts"
+  ],
+  "migrations/1743799508960-CreateSmsNotificationBatchesTable.ts": [],
+  "notification/dto/email-batch-status.dto.ts": [],
+  "notification/dto/email-response.dto.ts": [],
+  "notification/dto/query-sms-batch.dto.ts": [],
+  "notification/dto/send-email.dto.ts": [],
+  "notification/dto/send-sms.dto.ts": [],
+  "notification/dto/sms-batch-detail.dto.ts": [
+    "notification/dto/sms-batch-list.dto.ts"
+  ],
+  "notification/dto/sms-batch-list.dto.ts": [],
+  "notification/dto/sms-response.dto.ts": [],
+  "notification/email.processor.spec.ts": [
+    "notification/email.processor.ts",
+    "notification/notification.service.ts"
+  ],
+  "notification/email.processor.ts": [
+    "notification/interfaces/email-send-job-data.interface.ts",
+    "notification/notification.service.ts"
+  ],
+  "notification/interfaces/email-send-job-data.interface.ts": [],
+  "notification/interfaces/sms-send-job-data.interface.ts": [],
+  "notification/notification.controller.ts": [
+    "auth/guards/jwt-auth.guard.ts",
+    "auth/interfaces/request-with-user.interface.ts",
+    "notification/dto/query-sms-batch.dto.ts",
+    "notification/dto/send-email.dto.ts",
+    "notification/dto/send-sms.dto.ts",
+    "notification/dto/sms-batch-detail.dto.ts",
+    "notification/dto/sms-batch-list.dto.ts",
+    "notification/notification.service.ts"
+  ],
+  "notification/notification.module.ts": [
+    "email-message/entities/email-message.entity.ts",
+    "email-notification-batch/entities/email-notification-batch.entity.ts",
+    "notification/email.processor.ts",
+    "notification/notification.controller.ts",
+    "notification/notification.service.ts",
+    "sms-channel-config/sms-channel-config.module.ts",
+    "sms-dispatcher/sms-dispatcher.module.ts",
+    "sms-message/entities/sms-message.entity.ts",
+    "sms-notification-batch/entities/sms-notification-batch.entity.ts",
+    "sms-provider/sms-provider.module.ts",
+    "sms/sms.module.ts",
+    "template/template.module.ts",
+    "user/user.module.ts"
+  ],
+  "notification/notification.service.ts": [
+    "common/exceptions/business.exception.ts",
+    "email-message/entities/email-message.entity.ts",
+    "email-notification-batch/entities/email-notification-batch.entity.ts",
+    "email-template/entities/email-template.entity.ts",
+    "notification/dto/query-sms-batch.dto.ts",
+    "notification/dto/send-email.dto.ts",
+    "notification/dto/send-sms.dto.ts",
+    "notification/dto/sms-batch-detail.dto.ts",
+    "notification/dto/sms-batch-list.dto.ts",
+    "notification/interfaces/email-send-job-data.interface.ts",
+    "notification/interfaces/sms-send-job-data.interface.ts",
+    "sms-channel-config/sms-channel-config.service.ts",
+    "sms-dispatcher/sms-dispatcher.service.ts",
+    "sms-message/entities/sms-message.entity.ts",
+    "sms-notification-batch/entities/sms-notification-batch.entity.ts",
+    "sms-provider/entities/sms-provider.entity.ts",
+    "sms-provider/sms-provider.service.ts",
+    "template/entities/sms-template.entity.ts",
+    "template/template.service.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "notification/sms.processor.ts": [
+    "notification/interfaces/sms-send-job-data.interface.ts",
+    "notification/notification.service.ts"
+  ],
+  "payment/entities/payment.entity.ts": [
+    "user/entities/user.entity.ts"
+  ],
+  "payment/payment.controller.ts": [],
+  "payment/payment.module.ts": [
+    "payment/entities/payment.entity.ts",
+    "payment/payment.controller.ts",
+    "payment/payment.service.ts"
+  ],
+  "payment/payment.service.ts": [],
+  "pkgform/dto/batch-delete-pkgform.dto.ts": [],
+  "pkgform/dto/query-form.dto.ts": [],
+  "pkgform/dto/update-form.dto.ts": [],
+  "pkgform/entities/package-form.entity.ts": [
+    "user/entities/user.entity.ts"
+  ],
+  "pkgform/pkgform.controller.ts": [
+    "auth/guards/jwt-auth.guard.ts",
+    "pkgform/dto/batch-delete-pkgform.dto.ts",
+    "pkgform/dto/query-form.dto.ts",
+    "pkgform/dto/update-form.dto.ts",
+    "pkgform/pkgform.service.ts"
+  ],
+  "pkgform/pkgform.module.ts": [
+    "pkgform/entities/package-form.entity.ts",
+    "pkgform/pkgform.controller.ts",
+    "pkgform/pkgform.service.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "pkgform/pkgform.service.ts": [
+    "pkgform/dto/batch-delete-pkgform.dto.ts",
+    "pkgform/dto/query-form.dto.ts",
+    "pkgform/dto/update-form.dto.ts",
+    "pkgform/entities/package-form.entity.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "scripts/generate-password-hash.ts": [],
+  "sms-api/sms-api.controller.ts": [],
+  "sms-api/sms-api.module.ts": [],
+  "sms-batch/dto/batch-status-query.dto.ts": [],
+  "sms-batch/dto/create-batch.dto.ts": [],
+  "sms-batch/entities/sms-batch-buka-detail.entity.ts": [
+    "sms-batch/entities/sms-batch.entity.ts"
+  ],
+  "sms-batch/entities/sms-batch.entity.ts": [
+    "sms-batch/entities/sms-batch-buka-detail.entity.ts",
+    "tenant/entities/tenant.entity.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "sms-batch/sms-batch.controller.ts": [
+    "sms-batch/dto/batch-status-query.dto.ts",
+    "sms-batch/dto/create-batch.dto.ts",
+    "sms-batch/entities/sms-batch.entity.ts",
+    "sms-batch/sms-batch.service.ts"
+  ],
+  "sms-batch/sms-batch.module.ts": [
+    "sms-batch/entities/sms-batch-buka-detail.entity.ts",
+    "sms-batch/entities/sms-batch.entity.ts",
+    "sms-batch/sms-batch.controller.ts",
+    "sms-batch/sms-batch.service.ts",
+    "sms-provider/buka/buka.module.ts"
+  ],
+  "sms-batch/sms-batch.service.ts": [
+    "sms-batch/dto/create-batch.dto.ts",
+    "sms-batch/entities/sms-batch-buka-detail.entity.ts",
+    "sms-batch/entities/sms-batch.entity.ts",
+    "sms-provider/buka/buka.service.ts"
+  ],
+  "sms-channel-config/channels/buka-sms-channel.service.ts": [
+    "common/channels/sms-channel.abstract.ts",
+    "common/constants/channel-status-codes.ts",
+    "sms-channel-config/entities/channel-supported-country.entity.ts",
+    "sms-channel-config/entities/tenant-channel-config.entity.ts",
+    "sms-channel-config/entities/user-channel-config.entity.ts"
+  ],
+  "sms-channel-config/dto/buka-balance-response.dto.ts": [],
+  "sms-channel-config/dto/set-buka-user-config.dto.ts": [],
+  "sms-channel-config/dto/set-channel.dto.ts": [],
+  "sms-channel-config/entities/channel-supported-country.entity.ts": [],
+  "sms-channel-config/entities/tenant-channel-config.entity.ts": [
+    "tenant/entities/tenant.entity.ts"
+  ],
+  "sms-channel-config/entities/user-channel-config.entity.ts": [
+    "tenant/entities/tenant.entity.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "sms-channel-config/sms-channel-config.controller.ts": [
+    "auth/guards/jwt-auth.guard.ts",
+    "common/exceptions/business.exception.ts",
+    "sms-channel-config/dto/buka-balance-response.dto.ts",
+    "sms-channel-config/dto/set-buka-user-config.dto.ts",
+    "sms-channel-config/dto/set-channel.dto.ts",
+    "sms-channel-config/sms-channel-config.service.ts",
+    "tenant/tenant.service.ts",
+    "user/entities/user.entity.ts",
+    "user/user.service.ts"
+  ],
+  "sms-channel-config/sms-channel-config.module.ts": [
+    "sms-channel-config/channels/buka-sms-channel.service.ts",
+    "sms-channel-config/entities/channel-supported-country.entity.ts",
+    "sms-channel-config/entities/tenant-channel-config.entity.ts",
+    "sms-channel-config/entities/user-channel-config.entity.ts",
+    "sms-channel-config/sms-channel-config.controller.ts",
+    "sms-channel-config/sms-channel-config.service.ts",
+    "sms-provider/buka/buka.module.ts",
+    "sms-provider/entities/sms-provider.entity.ts",
+    "sms-provider/sms-provider.module.ts",
+    "tenant/tenant.module.ts",
+    "user/user.module.ts"
+  ],
+  "sms-channel-config/sms-channel-config.service.ts": [
+    "common/channels/sms-channel.abstract.ts",
+    "common/exceptions/business.exception.ts",
+    "sms-channel-config/channels/buka-sms-channel.service.ts",
+    "sms-channel-config/entities/channel-supported-country.entity.ts",
+    "sms-channel-config/entities/tenant-channel-config.entity.ts",
+    "sms-channel-config/entities/user-channel-config.entity.ts",
+    "sms-provider/buka/buka.service.ts",
+    "sms-provider/entities/sms-provider.entity.ts",
+    "tenant/tenant.service.ts",
+    "user/user.service.ts"
+  ],
+  "sms-dispatcher/sms-dispatcher.module.ts": [
+    "sms-dispatcher/sms-dispatcher.service.ts",
+    "sms-notification-batch/entities/sms-notification-batch.entity.ts",
+    "sms-provider-onbuka/sms-provider-onbuka.module.ts",
+    "sms-provider/sms-provider.module.ts",
+    "sms-tracking/sms-tracking.module.ts"
+  ],
+  "sms-dispatcher/sms-dispatcher.service.ts": [
+    "sms-notification-batch/entities/sms-notification-batch.entity.ts",
+    "sms-provider-onbuka/sms-provider-onbuka.service.ts",
+    "sms-provider/buka/buka.service.ts",
+    "sms-provider/sms-provider.service.ts",
+    "sms-tracking/sms-tracking.service.ts"
+  ],
+  "sms-message/entities/sms-message.entity.ts": [
+    "sms-notification-batch/entities/sms-notification-batch.entity.ts",
+    "sms-provider/entities/sms-provider.entity.ts"
+  ],
+  "sms-message/sms-message.module.ts": [
+    "sms-message/entities/sms-message.entity.ts",
+    "sms-message/sms-message.service.ts"
+  ],
+  "sms-message/sms-message.service.ts": [],
+  "sms-notification-batch/entities/sms-notification-batch.entity.ts": [
+    "sms-message/entities/sms-message.entity.ts",
+    "template/entities/sms-template.entity.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "sms-notification-batch/sms-notification-batch.module.ts": [
+    "sms-notification-batch/entities/sms-notification-batch.entity.ts",
+    "sms-notification-batch/sms-notification-batch.service.ts"
+  ],
+  "sms-notification-batch/sms-notification-batch.service.ts": [],
+  "sms-provider-onbuka/sms-provider-onbuka.controller.ts": [],
+  "sms-provider-onbuka/sms-provider-onbuka.module.ts": [
+    "sms-provider-onbuka/sms-provider-onbuka.controller.ts",
+    "sms-provider-onbuka/sms-provider-onbuka.service.ts",
+    "sms-provider/entities/sms-provider.entity.ts"
+  ],
+  "sms-provider-onbuka/sms-provider-onbuka.service.ts": [
+    "sms-message/entities/sms-message.entity.ts",
+    "sms-provider/entities/sms-provider.entity.ts"
+  ],
+  "sms-provider/buka/buka-base.service.ts": [
+    "sms-provider/buka/decorators/buka-request.decorator.ts",
+    "sms-provider/entities/sms-provider.entity.ts"
+  ],
+  "sms-provider/buka/buka.module.ts": [
+    "sms-channel-config/entities/tenant-channel-config.entity.ts",
+    "sms-channel-config/entities/user-channel-config.entity.ts",
+    "sms-provider/buka/buka.service.ts",
+    "sms-provider/entities/sms-provider.entity.ts",
+    "sms-provider/sms-provider.module.ts"
+  ],
+  "sms-provider/buka/buka.service.ts": [
+    "sms-channel-config/entities/tenant-channel-config.entity.ts",
+    "sms-channel-config/entities/user-channel-config.entity.ts",
+    "sms-provider/entities/sms-provider.entity.ts"
+  ],
+  "sms-provider/buka/decorators/buka-request.decorator.ts": [],
+  "sms-provider/dto/create-sms-provider.dto.ts": [],
+  "sms-provider/dto/update-sms-provider.dto.ts": [
+    "sms-provider/dto/create-sms-provider.dto.ts"
+  ],
+  "sms-provider/entities/sms-provider.entity.ts": [
+    "tenant/entities/tenant.entity.ts"
+  ],
+  "sms-provider/entities/user-channel-config.entity.ts": [],
+  "sms-provider/sms-provider.controller.ts": [
+    "sms-provider/dto/create-sms-provider.dto.ts",
+    "sms-provider/dto/update-sms-provider.dto.ts",
+    "sms-provider/sms-provider.service.ts"
+  ],
+  "sms-provider/sms-provider.module.ts": [
+    "sms-channel-config/entities/tenant-channel-config.entity.ts",
+    "sms-channel-config/entities/user-channel-config.entity.ts",
+    "sms-provider/buka/buka.module.ts",
+    "sms-provider/entities/sms-provider.entity.ts",
+    "sms-provider/sms-provider.controller.ts",
+    "sms-provider/sms-provider.service.ts"
+  ],
+  "sms-provider/sms-provider.service.ts": [
+    "sms-provider/dto/create-sms-provider.dto.ts",
+    "sms-provider/dto/update-sms-provider.dto.ts",
+    "sms-provider/entities/sms-provider.entity.ts"
+  ],
+  "sms-received-message/entities/sms-received-message.entity.ts": [
+    "sms-provider/entities/sms-provider.entity.ts",
+    "tenant/entities/tenant.entity.ts"
+  ],
+  "sms-received-message/sms-received-message.module.ts": [
+    "sms-received-message/entities/sms-received-message.entity.ts",
+    "sms-received-message/sms-received-message.service.ts"
+  ],
+  "sms-received-message/sms-received-message.service.ts": [],
+  "sms-status-api/sms-status-api.controller.ts": [],
+  "sms-status-api/sms-status-api.module.ts": [],
+  "sms-status-query/sms-status-query.module.ts": [],
+  "sms-status-query/sms-status-query.service.ts": [],
+  "sms-tracking/sms-tracking.module.ts": [
+    "sms-notification-batch/sms-notification-batch.module.ts",
+    "sms-tracking/sms-tracking.service.ts",
+    "sms/entities/sms-dispatch-batch.entity.ts",
+    "sms/entities/sms-message.entity.ts"
+  ],
+  "sms-tracking/sms-tracking.service.ts": [
+    "sms-message/entities/sms-message.entity.ts",
+    "sms-notification-batch/entities/sms-notification-batch.entity.ts",
+    "sms/entities/sms-dispatch-batch.entity.ts"
+  ],
+  "sms/dto/sms-batch-status.dto.ts": [],
+  "sms/dto/sms-job.dto.ts": [],
+  "sms/dto/sms-service-response.dto.ts": [],
+  "sms/entities/sms-dispatch-batch.entity.ts": [
+    "sms/entities/sms-message.entity.ts",
+    "template/entities/sms-template.entity.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "sms/entities/sms-message.entity.ts": [
+    "sms-provider/entities/sms-provider.entity.ts",
+    "sms/entities/sms-dispatch-batch.entity.ts"
+  ],
+  "sms/entities/sms-received-message.entity.ts": [],
+  "sms/sms.module.ts": [
+    "sms-dispatcher/sms-dispatcher.module.ts",
+    "sms-message/entities/sms-message.entity.ts",
+    "sms-notification-batch/entities/sms-notification-batch.entity.ts",
+    "sms-provider/entities/sms-provider.entity.ts",
+    "sms/sms.processor.ts",
+    "sms/sms.service.ts"
+  ],
+  "sms/sms.processor.spec.ts": [
+    "sms/sms.processor.ts",
+    "sms/sms.service.ts"
+  ],
+  "sms/sms.processor.ts": [
+    "sms/sms.service.ts"
+  ],
+  "sms/sms.service.spec.ts": [
+    "common/test/test-utils.ts",
+    "sms-dispatcher/sms-dispatcher.service.ts",
+    "sms-message/entities/sms-message.entity.ts",
+    "sms-notification-batch/entities/sms-notification-batch.entity.ts",
+    "sms-provider/entities/sms-provider.entity.ts",
+    "sms/sms.service.ts"
+  ],
+  "sms/sms.service.ts": [
+    "common/exceptions/business.exception.ts",
+    "notification/interfaces/sms-send-job-data.interface.ts",
+    "sms-dispatcher/sms-dispatcher.service.ts",
+    "sms-message/entities/sms-message.entity.ts",
+    "sms-notification-batch/entities/sms-notification-batch.entity.ts",
+    "sms-provider/entities/sms-provider.entity.ts"
+  ],
+  "sso/entities/sso-session.entity.ts": [
+    "tenant/entities/tenant.entity.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "sso/sso.controller.spec.ts": [
+    "sso/sso.controller.ts"
+  ],
+  "sso/sso.controller.ts": [
+    "sso/sso.service.ts"
+  ],
+  "sso/sso.module.ts": [
+    "auth/entities/user-token.entity.ts",
+    "sso/entities/sso-session.entity.ts",
+    "sso/sso.controller.ts",
+    "sso/sso.service.ts"
+  ],
+  "sso/sso.service.spec.ts": [
+    "sso/sso.service.ts"
+  ],
+  "sso/sso.service.ts": [
+    "auth/entities/user-token.entity.ts",
+    "sso/entities/sso-session.entity.ts"
+  ],
+  "status/dto/email-received-message-page.dto.ts": [
+    "common/dto/pagination.dto.ts",
+    "email-received-message/entities/email-received-message.entity.ts"
+  ],
+  "status/dto/get-batch-messages.dto.ts": [],
+  "status/dto/sms-message-page.dto.ts": [
+    "common/dto/pagination.dto.ts"
+  ],
+  "status/dto/sms-received-message-page.dto.ts": [
+    "common/dto/pagination.dto.ts"
+  ],
+  "status/status.controller.ts": [
+    "auth/guards/jwt-auth.guard.ts",
+    "common/dto/pagination.dto.ts",
+    "email-message/dto/email-message-response.dto.ts",
+    "email-received-message/entities/email-received-message.entity.ts",
+    "sms/dto/sms-service-response.dto.ts",
+    "status/dto/email-received-message-page.dto.ts",
+    "status/dto/get-batch-messages.dto.ts",
+    "status/dto/sms-message-page.dto.ts",
+    "status/dto/sms-received-message-page.dto.ts",
+    "status/status.service.ts"
+  ],
+  "status/status.module.ts": [
+    "email-message/entities/email-message.entity.ts",
+    "email-notification-batch/entities/email-notification-batch.entity.ts",
+    "email-received-message/entities/email-received-message.entity.ts",
+    "sms-message/entities/sms-message.entity.ts",
+    "sms-notification-batch/entities/sms-notification-batch.entity.ts",
+    "sms-received-message/entities/sms-received-message.entity.ts",
+    "status/status.controller.ts",
+    "status/status.service.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "status/status.service.ts": [
+    "common/dto/pagination.dto.ts",
+    "common/exceptions/business.exception.ts",
+    "email-message/entities/email-message.entity.ts",
+    "email-notification-batch/entities/email-notification-batch.entity.ts",
+    "email-received-message/entities/email-received-message.entity.ts",
+    "sms-message/entities/sms-message.entity.ts",
+    "sms-notification-batch/entities/sms-notification-batch.entity.ts",
+    "sms-received-message/entities/sms-received-message.entity.ts",
+    "sms/dto/sms-service-response.dto.ts",
+    "status/dto/email-received-message-page.dto.ts",
+    "status/dto/get-batch-messages.dto.ts",
+    "status/dto/sms-message-page.dto.ts",
+    "status/dto/sms-received-message-page.dto.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "system/dict-data.controller.ts": [
+    "system/dict-data.service.ts"
+  ],
+  "system/dict-data.service.ts": [
+    "system/dto/dict-data.dto.ts",
+    "system/entities/dict-data.entity.ts"
+  ],
+  "system/dict.module.ts": [
+    "system/dict-data.controller.ts",
+    "system/dict-data.service.ts",
+    "system/entities/dict-data.entity.ts",
+    "system/notify-message.controller.ts",
+    "system/notify-message.module.ts",
+    "system/notify-message.service.ts"
+  ],
+  "system/dto/dict-data.dto.ts": [],
+  "system/entities/dict-data.entity.ts": [],
+  "system/notify-message.controller.spec.ts": [
+    "system/notify-message.controller.ts"
+  ],
+  "system/notify-message.controller.ts": [
+    "system/notify-message.service.ts"
+  ],
+  "system/notify-message.module.ts": [
+    "system/notify-message.controller.ts",
+    "system/notify-message.service.ts"
+  ],
+  "system/notify-message.service.spec.ts": [
+    "system/notify-message.service.ts"
+  ],
+  "system/notify-message.service.ts": [],
+  "template/dto/create-email-template.dto.ts": [],
+  "template/dto/create-sms-template.dto.ts": [],
+  "template/dto/email-template-page.dto.ts": [
+    "email-template/dto/email-template-response.dto.ts"
+  ],
+  "template/dto/email-template-response.dto.ts": [],
+  "template/dto/query-email-template-page.dto.ts": [],
+  "template/dto/query-sms-template-page.dto.ts": [],
+  "template/dto/sms-template-page-req.dto.ts": [
+    "common/dto/pagination-req.dto.ts"
+  ],
+  "template/dto/sms-template-page.dto.ts": [
+    "template/dto/sms-template-response.dto.ts"
+  ],
+  "template/dto/sms-template-response.dto.ts": [
+    "user/dto/user.dto.ts"
+  ],
+  "template/dto/update-email-template.dto.ts": [
+    "template/dto/create-email-template.dto.ts"
+  ],
+  "template/dto/update-sms-template.dto.ts": [
+    "template/dto/create-sms-template.dto.ts"
+  ],
+  "template/entities/sms-template.entity.ts": [
+    "tenant/entities/tenant.entity.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "template/template.controller.ts": [
+    "auth/guards/jwt-auth.guard.ts",
+    "email-template/dto/email-template-response.dto.ts",
+    "email-template/entities/email-template.entity.ts",
+    "template/dto/create-email-template.dto.ts",
+    "template/dto/create-sms-template.dto.ts",
+    "template/dto/email-template-page.dto.ts",
+    "template/dto/query-email-template-page.dto.ts",
+    "template/dto/query-sms-template-page.dto.ts",
+    "template/dto/sms-template-page.dto.ts",
+    "template/dto/sms-template-response.dto.ts",
+    "template/dto/update-email-template.dto.ts",
+    "template/dto/update-sms-template.dto.ts",
+    "template/template.service.ts",
+    "user/dto/user.dto.ts"
+  ],
+  "template/template.module.ts": [
+    "email-template/entities/email-template.entity.ts",
+    "template/entities/sms-template.entity.ts",
+    "template/template.controller.ts",
+    "template/template.service.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "template/template.service.spec.ts": [
+    "email-template/entities/email-template.entity.ts",
+    "template/dto/create-email-template.dto.ts",
+    "template/dto/create-sms-template.dto.ts",
+    "template/dto/update-sms-template.dto.ts",
+    "template/entities/sms-template.entity.ts",
+    "template/template.service.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "template/template.service.ts": [
+    "common/exceptions/business.exception.ts",
+    "email-template/dto/email-template-response.dto.ts",
+    "email-template/entities/email-template.entity.ts",
+    "template/dto/create-email-template.dto.ts",
+    "template/dto/create-sms-template.dto.ts",
+    "template/dto/email-template-page.dto.ts",
+    "template/dto/query-email-template-page.dto.ts",
+    "template/dto/query-sms-template-page.dto.ts",
+    "template/dto/sms-template-page.dto.ts",
+    "template/dto/sms-template-response.dto.ts",
+    "template/dto/update-email-template.dto.ts",
+    "template/dto/update-sms-template.dto.ts",
+    "template/entities/sms-template.entity.ts",
+    "user/dto/index.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "tenant/dto/create-tenant.dto.ts": [],
+  "tenant/dto/tenant-response.dto.ts": [
+    "tenant/entities/tenant.entity.ts"
+  ],
+  "tenant/dto/update-tenant.dto.ts": [
+    "tenant/entities/tenant.entity.ts"
+  ],
+  "tenant/entities/tenant.entity.ts": [
+    "user/entities/user.entity.ts"
+  ],
+  "tenant/tenant.controller.spec.ts": [
+    "tenant/tenant.controller.ts"
+  ],
+  "tenant/tenant.controller.ts": [
+    "tenant/dto/create-tenant.dto.ts",
+    "tenant/dto/tenant-response.dto.ts",
+    "tenant/dto/update-tenant.dto.ts",
+    "tenant/entities/tenant.entity.ts",
+    "tenant/tenant.service.ts"
+  ],
+  "tenant/tenant.module.ts": [
+    "tenant/entities/tenant.entity.ts",
+    "tenant/tenant.controller.ts",
+    "tenant/tenant.service.ts"
+  ],
+  "tenant/tenant.service.spec.ts": [
+    "tenant/tenant.service.ts"
+  ],
+  "tenant/tenant.service.ts": [
+    "common/exceptions/business.exception.ts",
+    "tenant/dto/create-tenant.dto.ts",
+    "tenant/dto/update-tenant.dto.ts",
+    "tenant/entities/tenant.entity.ts"
+  ],
+  "user/controllers/user.profile.controller.ts": [
+    "auth/guards/jwt-auth.guard.ts",
+    "user/user.service.ts"
+  ],
+  "user/dto/create-user.dto.ts": [
+    "user/entities/user.entity.ts"
+  ],
+  "user/dto/index.ts": [
+    "user/dto/create-user.dto.ts",
+    "user/dto/query-user-page.dto.ts",
+    "user/dto/update-user.dto.ts",
+    "user/dto/user-list-page.dto.ts",
+    "user/dto/user-permission.dto.ts",
+    "user/dto/user-response.dto.ts",
+    "user/dto/user.dto.ts"
+  ],
+  "user/dto/query-user-page.dto.ts": [
+    "common/dto/pagination-req.dto.ts"
+  ],
+  "user/dto/update-user.dto.ts": [
+    "user/entities/user.entity.ts"
+  ],
+  "user/dto/user-list-page.dto.ts": [
+    "user/dto/user-response.dto.ts"
+  ],
+  "user/dto/user-permission.dto.ts": [
+    "user/entities/user.entity.ts"
+  ],
+  "user/dto/user-profile-response.dto.ts": [],
+  "user/dto/user-response.dto.ts": [
+    "auth/entities/role.entity.ts",
+    "user/entities/user.entity.ts"
+  ],
+  "user/dto/user.dto.ts": [
+    "tenant/entities/tenant.entity.ts"
+  ],
+  "user/entities/user.entity.ts": [
+    "account/entities/account.entity.ts",
+    "auth/entities/role.entity.ts",
+    "tenant/entities/tenant.entity.ts"
+  ],
+  "user/user.controller.ts": [
+    "auth/guards/jwt-auth.guard.ts",
+    "user/dto/create-user.dto.ts",
+    "user/dto/query-user-page.dto.ts",
+    "user/dto/update-user.dto.ts",
+    "user/dto/user-list-page.dto.ts",
+    "user/dto/user-response.dto.ts",
+    "user/entities/user.entity.ts",
+    "user/user.service.ts"
+  ],
+  "user/user.module.ts": [
+    "auth/entities/permission.entity.ts",
+    "auth/entities/role.entity.ts",
+    "tenant/tenant.module.ts",
+    "user/controllers/user.profile.controller.ts",
+    "user/entities/user.entity.ts",
+    "user/user.controller.ts",
+    "user/user.service.ts"
+  ],
+  "user/user.service.spec.ts": [
+    "common/test/test-utils.ts",
+    "user/entities/user.entity.ts",
+    "user/user.service.ts"
+  ],
+  "user/user.service.ts": [
+    "common/exceptions/business.exception.ts",
+    "tenant/tenant.service.ts",
+    "user/dto/create-user.dto.ts",
+    "user/dto/query-user-page.dto.ts",
+    "user/dto/update-user.dto.ts",
+    "user/dto/user-permission.dto.ts",
+    "user/dto/user-response.dto.ts",
+    "user/entities/user.entity.ts"
+  ]
+}

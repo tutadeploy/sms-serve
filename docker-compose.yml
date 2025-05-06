@@ -2,14 +2,14 @@ version: '3.8'
 
 services:
   mysql:
-    image: mysql:8.0 # 或者你偏好的其它版本
+    image: mysql:8.0
     container_name: sms-serve-mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: smsserver # 替换为你强大的 root 密码
+      MYSQL_ROOT_PASSWORD: smsrootpasswd # 替换为你强大的 root 密码
       MYSQL_DATABASE: sms_serve # 数据库名
       MYSQL_USER: sms_serve_user # 应用连接数据库的用户名
-      MYSQL_PASSWORD: smsserver # 应用连接数据库的密码
+      MYSQL_PASSWORD: smsserverpaswd # 应用连接数据库的密码
       # 创建测试数据库
       MYSQL_MULTIPLE_DATABASES: 'sms_serve,sms_serve_test'
       MYSQL_ROOT_HOST: '%' # 允许root用户从任何主机连接
