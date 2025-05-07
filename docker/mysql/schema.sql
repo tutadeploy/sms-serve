@@ -1,17 +1,9 @@
 -- 创建数据库（如果不存在）
 CREATE DATABASE IF NOT EXISTS `sms_serve` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- 确保root用户可以从任何IP访问
-ALTER USER 'root'@'%' IDENTIFIED BY 'smsserver';
+-- 确保root用户可以从任何IP访问，设置密码为root123
+ALTER USER 'root'@'%' IDENTIFIED BY 'root123';
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
--- 如果特定IP需要访问权限，显式创建
-CREATE USER IF NOT EXISTS 'root'@'192.168.65.1' IDENTIFIED BY 'smsserver';
-GRANT ALL PRIVILEGES ON *.* TO 'root'@'192.168.65.1' WITH GRANT OPTION;
-FLUSH PRIVILEGES;
-
--- 创建用户并授权
-CREATE USER IF NOT EXISTS 'sms_serve_user'@'%' IDENTIFIED BY 'smsserver';
-GRANT ALL PRIVILEGES ON sms_serve.* TO 'sms_serve_user'@'%';
 FLUSH PRIVILEGES;
 
 USE sms_serve;
@@ -587,6 +579,14 @@ CREATE TABLE `package_forms` (
 INSERT INTO `sms_providers` (`name`, `tenant_id`, `display_name`, `base_url`, `is_active`) 
 VALUES ('onbuka', 1, 'Onbuka短信服务', 'https://api.onbuka.com', true);
 
+-- 初始化SMPP服务提供商
+INSERT INTO `sms_providers` (`name`, `tenant_id`, `display_name`, `base_url`, `is_active`) 
+VALUES ('smpp', 1, 'SMPP短信服务', 'http://123.253.110.98:13000', true);
+
 -- 为租户1配置Onbuka渠道
 INSERT INTO `tenant_channel_configs` (`tenant_id`, `channel`, `api_key`, `api_secret`, `is_active`) 
-VALUES (1, 'onbuka', 'bDqJFiq9', '7bz1lzh9', true); 
+VALUES (1, 'onbuka', 'BxGSbzqk', 'F5O8VEfM', true);
+
+-- 为租户1配置SMPP渠道
+INSERT INTO `tenant_channel_configs` (`tenant_id`, `channel`, `api_key`, `api_secret`, `is_active`) 
+VALUES (1, 'smpp', 'admin', 'admin123', true); 

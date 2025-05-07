@@ -134,15 +134,12 @@ export class User {
   @BeforeInsert()
   @BeforeUpdate()
   hashPassword() {
-    console.log('hashPassword hook triggered, password:', !!this.password);
-
     // 只有在提供了明文密码的情况下才进行哈希
     if (this.password) {
       try {
         const saltRounds = 10;
         // 使用同步方法以确保在任何情况下都能完成哈希
         this.passwordHash = bcrypt.hashSync(this.password, saltRounds);
-        console.log('Password hashed successfully, passwordHash is now set.');
         // 清除临时密码字段
         this.password = undefined;
       } catch (error) {
@@ -150,7 +147,6 @@ export class User {
         throw new Error('Failed to hash password');
       }
     } else {
-      console.log('No password provided for hashing');
       // 如果是更新操作，不提供密码是正常的
       // 如果是插入操作且passwordHash为空字符串，则可能是问题
       if (

@@ -6,38 +6,34 @@ services:
     container_name: sms-serve-mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: smsrootpasswd # 替换为你强大的 root 密码
-      MYSQL_DATABASE: sms_serve # 数据库名
-      MYSQL_USER: sms_serve_user # 应用连接数据库的用户名
-      MYSQL_PASSWORD: smsserverpaswd # 应用连接数据库的密码
-      # 创建测试数据库
-      MYSQL_MULTIPLE_DATABASES: 'sms_serve,sms_serve_test'
-      MYSQL_ROOT_HOST: '%' # 允许root用户从任何主机连接
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: sms_serve
+      MYSQL_ROOT_HOST: '%'
     ports:
-      - '3306:3306' # 将容器的3306端口映射到宿主机的3306端口
+      - '3306:3306'
     volumes:
-      - mysql_data:/var/lib/mysql # 将数据库数据持久化到 Docker volume
-      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
-      - ./init-test-db.sh:/docker-entrypoint-initdb.d/02-init-test-db.sh
-      - ./mysql.cnf:/etc/mysql/conf.d/mysql.cnf
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./docker/mysql/mysql.cnf:/etc/mysql/conf.d/mysql.cnf
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     networks:
       - sms-serve-net
 
   redis:
-    image: redis:7 # 或者你偏好的其它版本
+    image: redis:7
     container_name: sms-serve-redis
     restart: always
     ports:
-      - '6380:6379' # 将容器的6379端口映射到宿主机的6380端口
+      - '6380:6379'
     volumes:
-      - redis_data:/data # 将 Redis 数据持久化到 Docker volume
+      - redis_data:/data
     networks:
       - sms-serve-net
 
 volumes:
   mysql_data:
   redis_data:
+
 networks:
   sms-serve-net:
     driver: bridge

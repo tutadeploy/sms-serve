@@ -6,6 +6,7 @@ import { SmsProviderService } from './sms-provider.service';
 import { SmsProviderController } from './sms-provider.controller';
 import { SmsProvider } from './entities/sms-provider.entity';
 import { BukaModule } from './buka/buka.module';
+import { SmppModule } from './smpp/smpp.module';
 import { TenantChannelConfig } from '../sms-channel-config/entities/tenant-channel-config.entity';
 import { UserChannelConfig } from '../sms-channel-config/entities/user-channel-config.entity';
 
@@ -19,9 +20,15 @@ import { UserChannelConfig } from '../sms-channel-config/entities/user-channel-c
     HttpModule,
     ConfigModule,
     forwardRef(() => BukaModule),
+    forwardRef(() => SmppModule),
   ],
   controllers: [SmsProviderController],
   providers: [SmsProviderService],
-  exports: [SmsProviderService, TypeOrmModule, forwardRef(() => BukaModule)],
+  exports: [
+    SmsProviderService,
+    TypeOrmModule,
+    forwardRef(() => BukaModule),
+    forwardRef(() => SmppModule),
+  ],
 })
 export class SmsProviderModule {}

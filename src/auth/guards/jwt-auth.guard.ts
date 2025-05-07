@@ -24,6 +24,15 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       context.getHandler(),
       context.getClass(),
     ]);
+
+    // 添加调试日志
+    console.log('==== JwtAuthGuard 调试信息 ====');
+    console.log('请求路径:', context.switchToHttp().getRequest().url);
+    console.log('isPublic:', isPublic);
+    console.log('handler:', context.getHandler().name);
+    console.log('class:', context.getClass().name);
+    console.log('============================');
+
     if (isPublic) {
       return true;
     }

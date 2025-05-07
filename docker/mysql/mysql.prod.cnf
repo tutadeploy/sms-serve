@@ -1,0 +1,23 @@
+[mysqld]
+max_connections = 1000
+innodb_buffer_pool_size = 2G
+innodb_flush_log_at_trx_commit = 1
+innodb_flush_method = O_DIRECT
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+default_authentication_plugin = mysql_native_password
+
+# Security settings
+secure-file-priv = /var/lib/mysql-files
+skip-symbolic-links
+
+# Performance settings
+innodb_file_per_table = 1
+innodb_log_buffer_size = 32M
+innodb_log_file_size = 512M
+innodb_write_io_threads = 8
+innodb_read_io_threads = 8
+
+# Connection and thread settings
+thread_cache_size = 128
+max_allowed_packet = 64M 

@@ -26,7 +26,7 @@ import { NotificationModule } from './notification/notification.module';
 import { StatusModule } from './status/status.module';
 import { CaptchaModule } from './captcha/captcha.module';
 import { getTypeOrmModuleOptions } from './common/config/typeorm.config';
-import { configs } from './config';
+import configuration from './config/configuration';
 import { TenantModule } from './tenant/tenant.module';
 import { SsoModule } from './sso/sso.module';
 import { DictModule } from './system/dict.module';
@@ -43,8 +43,9 @@ import { SmsBatchModule } from './sms-batch/sms-batch.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
-      load: configs,
+      load: [configuration],
+      expandVariables: true,
+      cache: true,
     }),
     CacheModule.register({
       isGlobal: true,

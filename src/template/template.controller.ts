@@ -185,7 +185,6 @@ export class TemplateController {
   async findAllSmsTemplates(
     @Req() req: RequestWithUser,
   ): Promise<SmsTemplateResponseDto[]> {
-    console.log('req.user in findAllSmsTemplates:', req.user);
     const userId = req.user.sub;
     const tenantId = req.user.tenantId;
     if (!tenantId) {

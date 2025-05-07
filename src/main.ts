@@ -11,6 +11,9 @@ import { getWinstonLoggerConfig } from './common/config/logger.config';
 import { WinstonModule } from 'nest-winston';
 import { Request, Response } from 'express';
 
+// 设置环境变量默认值
+process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+
 async function bootstrap() {
   // 使用 Winston 日志配置
   const winstonLogger = WinstonModule.createLogger(

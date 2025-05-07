@@ -879,13 +879,6 @@ export class BukaService {
       // 构建URL（Buka查询时间范围内短信的API地址）
       const url = `${baseUrl}/v3/getSentRcd`;
 
-      console.log('Buka查询时间范围内短信的API地址:', url);
-      console.log('Buka查询时间范围内短信的API地址:', url);
-      console.log('Buka查询时间范围内短信的API地址:', url);
-      console.log('Buka查询时间范围内短信的API地址:', url);
-      console.log('Buka查询时间范围内短信的API地址:', url);
-      console.log('Buka查询时间范围内短信的API地址:', url);
-
       // 将时间转换为ISO8601格式
       const formatDate = (date: Date): string => {
         return date.toISOString().slice(0, -5) + 'Z'; // 移除毫秒部分并添加Z表示UTC

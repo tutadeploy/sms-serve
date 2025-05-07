@@ -3,6 +3,8 @@ import {
   Logger,
   NotFoundException,
   BadRequestException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -13,6 +15,8 @@ import { CreateSmsProviderDto } from './dto/create-sms-provider.dto';
 import { UpdateSmsProviderDto } from './dto/update-sms-provider.dto';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import { BukaService } from './buka/buka.service';
+import { SmppService } from './smpp/smpp.service';
 
 @Injectable()
 export class SmsProviderService {
@@ -23,6 +27,10 @@ export class SmsProviderService {
     private readonly smsProviderRepository: Repository<SmsProvider>,
     private readonly configService: ConfigService,
     private readonly httpService: HttpService,
+    @Inject(forwardRef(() => BukaService))
+    private readonly bukaService: BukaService,
+    @Inject(forwardRef(() => SmppService))
+    private readonly smppService: SmppService,
   ) {}
 
   async findOne(id: number): Promise<SmsProvider | null> {
@@ -314,7 +322,10 @@ export class SmsProviderService {
   ): Promise<SmsProvider[]> {
     try {
       return await this.smsProviderRepository.find({
-        where: onlyActive ? { isActive: true, tenantId } : { tenantId },
+        where: {
+          tenantId,
+          ...(onlyActive ? { isActive: true } : {}),
+        },
         order: { name: 'ASC' },
       });
     } catch (error) {
@@ -322,6 +333,25 @@ export class SmsProviderService {
         `Error finding SMS providers for tenant ${tenantId}: ${error instanceof Error ? error.message : String(error)}`,
       );
       return [];
+    }
+  }
+
+  /**
+   * 根据渠道名称获取对应的服务实例
+   * @param channel 渠道名称 (onbuka或smpp)
+   * @returns 对应的服务实例
+   */
+  getProviderService(channel: string) {
+    const lowerChannel = channel.toLowerCase();
+
+    switch (lowerChannel) {
+      case 'onbuka':
+        return this.bukaService;
+      case 'smpp':
+        return this.smppService;
+      default:
+        this.logger.error(`Unsupported channel: ${channel}`);
+        throw new BadRequestException(`不支持的渠道: ${channel}`);
     }
   }
 }

@@ -175,10 +175,6 @@ export class PkgformService {
       }
     }
 
-    // 添加调试日志
-    console.log('SQL查询条件:', queryBuilder.getSql());
-    console.log('SQL参数:', queryBuilder.getParameters());
-
     // 配置排序和分页
     queryBuilder.orderBy('packageForm.createTime', sort);
     queryBuilder.skip((pageNo - 1) * pageSize);
@@ -234,9 +230,6 @@ export class PkgformService {
     }
 
     queryBuilder.orderBy('packageForm.createTime', 'ASC');
-
-    console.log('导出查询:', queryBuilder.getSql());
-    console.log('导出参数:', queryBuilder.getParameters());
 
     const forms = await queryBuilder.getMany();
 

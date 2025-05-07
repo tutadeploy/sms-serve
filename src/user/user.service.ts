@@ -164,6 +164,50 @@ export class UserService {
   }
 
   /**
+   * 通过用户名查询用户 (不区分大小写)
+   * @param username 用户名
+   * @returns 用户对象或null
+   */
+  async findByUsernameIgnoreCase(username: string): Promise<User | null> {
+    this.logger.log(`尝试通过用户名查找用户 (不区分大小写): "${username}"`);
+    try {
+      const user = await this.userRepository
+        .createQueryBuilder('user')
+        .where('LOWER(user.username) = LOWER(:username)', { username })
+        .select([
+          'user.id',
+          'user.username',
+          'user.email',
+          // 'user.passwordHash', // 通常不需要返回密码哈希
+          'user.role',
+          'user.isActive',
+          'user.tenantId',
+          'user.createTime',
+          'user.updateTime',
+        ])
+        .getOne();
+
+      if (!user) {
+        this.logger.warn(`未找到用户名为 "${username}" 的用户 (不区分大小写)`);
+        return null;
+      }
+      this.logger.log(
+        `成功找到用户 (不区分大小写): ${username}, ID: ${user.id}, 角色: ${user.role}`,
+      );
+      return user;
+    } catch (error) {
+      this.logger.error(
+        `查询用户 (不区分大小写) 发生错误: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      // 根据错误处理策略，这里可以选择抛出异常或返回null
+      // 为了与 findOne 等方法行为一致（找不到时抛 NotFoundException），这里可以考虑抛出
+      // 但如果调用方期望null作为"未找到"的信号，则返回null是合适的
+      // 目前保持返回null，如果业务逻辑需要，可以改为抛出异常
+      return null;
+    }
+  }
+
+  /**
    * 通过用户名或邮箱查询用户
    * @param usernameOrEmail 用户名或邮箱
    * @returns 用户对象

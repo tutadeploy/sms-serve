@@ -150,10 +150,6 @@ export class SmsProviderOnbukaService {
         `Sending SMS to Onbuka: ${JSON.stringify(requestBody)}`,
       );
 
-      console.log('url', url);
-      console.log('headers', headers);
-      console.log('requestBody', requestBody);
-
       const response = await firstValueFrom(
         this.httpService.post<OnbukaSendResponse>(url, requestBody, {
           headers,

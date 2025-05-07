@@ -16,6 +16,7 @@ import {
   BusinessErrorCode,
 } from '../common/exceptions/business.exception';
 import { BukaService } from '../sms-provider/buka/buka.service';
+import { SmppService } from '../sms-provider/smpp/smpp.service';
 import { SmsProvider } from '../sms-provider/entities/sms-provider.entity';
 
 @Injectable()
@@ -35,6 +36,8 @@ export class SmsChannelConfigService {
     private readonly tenantService: TenantService,
     @Inject(forwardRef(() => BukaService))
     private readonly bukaService: BukaService,
+    @Inject(forwardRef(() => SmppService))
+    private readonly smppService: SmppService,
     @InjectRepository(SmsProvider)
     private readonly smsProviderRepository: Repository<SmsProvider>,
   ) {
@@ -307,6 +310,47 @@ export class SmsChannelConfigService {
       );
       throw new BusinessException(
         error instanceof Error ? error.message : 'Failed to get Buka balance',
+        BusinessErrorCode.CHANNEL_CONFIG_ERROR,
+      );
+    }
+  }
+
+  /**
+   * 获取SMPP余额
+   */
+  async getSmppBalance(
+    tenantId: number,
+    userId: number,
+  ): Promise<{ balance: number }> {
+    try {
+      // 验证租户是否配置了SMPP渠道
+      const tenantConfig = await this.tenantChannelConfigRepository.findOne({
+        where: {
+          tenantId,
+          channel: 'smpp',
+          isActive: true,
+        },
+      });
+
+      if (!tenantConfig) {
+        throw new BusinessException(
+          '租户未配置SMPP渠道或配置未激活',
+          BusinessErrorCode.CHANNEL_CONFIG_ERROR,
+        );
+      }
+
+      // 调用SmppService获取余额
+      const result = await this.smppService.getBalance(tenantId, userId);
+      this.logger.log(
+        `[SmsChannelConfigService] SmppService.getBalance result: ${JSON.stringify(result)}`,
+      );
+      return result;
+    } catch (error) {
+      this.logger.error(
+        `[SmsChannelConfigService] Failed to get SMPP balance: ${error instanceof Error ? error.message : String(error)}`,
+      );
+      throw new BusinessException(
+        error instanceof Error ? error.message : 'Failed to get SMPP balance',
         BusinessErrorCode.CHANNEL_CONFIG_ERROR,
       );
     }
