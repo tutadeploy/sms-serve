@@ -8,6 +8,7 @@ import { ChannelSupportedCountry } from './entities/channel-supported-country.en
 import { SmsChannelConfigService } from './sms-channel-config.service';
 import { SmsChannelConfigController } from './sms-channel-config.controller';
 import { BukaSmsChannelService } from './channels/buka-sms-channel.service';
+import { SmppSmsChannelService } from './channels/smpp-sms-channel.service';
 import { UserModule } from '../user/user.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { BukaModule } from '../sms-provider/buka/buka.module';
@@ -32,7 +33,15 @@ import { SmsProviderModule } from '../sms-provider/sms-provider.module';
     forwardRef(() => SmsProviderModule),
   ],
   controllers: [SmsChannelConfigController],
-  providers: [SmsChannelConfigService, BukaSmsChannelService],
-  exports: [SmsChannelConfigService, BukaSmsChannelService],
+  providers: [
+    SmsChannelConfigService,
+    BukaSmsChannelService,
+    SmppSmsChannelService,
+  ],
+  exports: [
+    SmsChannelConfigService,
+    BukaSmsChannelService,
+    SmppSmsChannelService,
+  ],
 })
 export class SmsChannelConfigModule {}

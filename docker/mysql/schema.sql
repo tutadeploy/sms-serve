@@ -551,6 +551,10 @@ INSERT INTO `channel_supported_countries` (`channel`, `country_code`, `dial_code
 ('onbuka', 'CM', '+237', 1),
 ('onbuka', 'GH', '+233', 1);
 
+-- 初始化SMPP支持的国家数据
+INSERT INTO `channel_supported_countries` (`channel`, `country_code`, `dial_code`, `is_active`) VALUES
+('smpp', 'HK', '+852', 1);
+
 -- 用户包裹表单表
 CREATE TABLE `package_forms` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -577,11 +581,11 @@ CREATE TABLE `package_forms` (
 
 -- 初始化Onbuka服务提供商
 INSERT INTO `sms_providers` (`name`, `tenant_id`, `display_name`, `base_url`, `is_active`) 
-VALUES ('onbuka', 1, 'Onbuka短信服务', 'https://api.onbuka.com', true);
+VALUES ('onbuka', 1, 'line1', 'https://api.onbuka.com', true);
 
 -- 初始化SMPP服务提供商
 INSERT INTO `sms_providers` (`name`, `tenant_id`, `display_name`, `base_url`, `is_active`) 
-VALUES ('smpp', 1, 'SMPP短信服务', 'http://123.253.110.98:13000', true);
+VALUES ('smpp', 1, 'line2', 'http://123.253.110.98:13000', true);
 
 -- 为租户1配置Onbuka渠道
 INSERT INTO `tenant_channel_configs` (`tenant_id`, `channel`, `api_key`, `api_secret`, `is_active`) 

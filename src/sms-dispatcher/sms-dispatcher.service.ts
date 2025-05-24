@@ -3,6 +3,7 @@ import { SmsProviderService } from '../sms-provider/sms-provider.service';
 import { SmsProviderOnbukaService } from '../sms-provider-onbuka/sms-provider-onbuka.service';
 import { SmsTrackingService } from '../sms-tracking/sms-tracking.service';
 import { BukaService } from '../sms-provider/buka/buka.service';
+import { SmppService } from '../sms-provider/smpp/smpp.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SmsNotificationBatch } from '../sms-notification-batch/entities/sms-notification-batch.entity';
@@ -16,6 +17,7 @@ export class SmsDispatcherService {
     private readonly smsProviderOnbukaService: SmsProviderOnbukaService,
     private readonly smsTrackingService: SmsTrackingService,
     private readonly bukaService: BukaService,
+    private readonly smppService: SmppService,
     @InjectRepository(SmsNotificationBatch)
     private readonly smsBatchRepository: Repository<SmsNotificationBatch>,
   ) {}
@@ -46,18 +48,34 @@ export class SmsDispatcherService {
         throw new Error(`Provider with ID ${providerId} not found`);
       }
 
+      // 详细记录派发信息
+      this.logger.log(
+        `Dispatching SMS to provider ${providerId} (${provider.name}), phone: ${phoneNumber}, messageId: ${messageId}`,
+      );
+
       // 获取租户ID和用户ID，这里使用默认值1
       // 实际生产环境中应该从请求上下文获取或从数据库查询
       const tenantId = 1;
       const userId = 1;
 
       // 根据提供商类型选择相应的服务 (使用 name 字段)
-      switch (
-        provider.name.toLowerCase() // 使用 name 并转小写比较
-      ) {
+      const providerName = provider.name.toLowerCase(); // 使用 name 并转小写比较
+      this.logger.log(`Using provider type: ${providerName}`);
+
+      switch (providerName) {
         case 'onbuka':
           // 使用BukaService代替SmsProviderOnbukaService
           return await this.bukaService.send(
+            messageId,
+            phoneNumber,
+            content,
+            tenantId,
+            userId,
+          );
+        case 'smpp':
+          this.logger.log(`Sending SMS via SMPP, messageId: ${messageId}`);
+          // 使用SmppService发送短信
+          return await this.smppService.send(
             messageId,
             phoneNumber,
             content,
@@ -68,6 +86,7 @@ export class SmsDispatcherService {
         // case 'aliyun':
         //   return await this.smsProviderAliyunService.sendSms(...);
         default:
+          this.logger.error(`Provider type ${provider.name} is not supported`);
           throw new Error(`Provider type ${provider.name} is not supported`); // 使用 name
       }
     } catch (error: unknown) {

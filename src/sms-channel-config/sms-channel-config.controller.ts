@@ -31,6 +31,7 @@ import {
 import { JwtAuthGuard, IS_PUBLIC_KEY } from '../auth/guards/jwt-auth.guard';
 import { Request } from 'express';
 import { User } from '../user/entities/user.entity';
+import { SmsChannelListRespVO } from './dto/sms-channel.vo';
 
 // 定义包含用户信息的请求类型
 interface RequestWithUser extends Request {
@@ -312,5 +313,16 @@ export class SmsChannelConfigController {
         BusinessErrorCode.CHANNEL_CONFIG_ERROR,
       );
     }
+  }
+
+  @Get('list')
+  @ApiOperation({ summary: '获取渠道列表' })
+  @ApiResponse({
+    status: 200,
+    description: '获取成功',
+    type: SmsChannelListRespVO,
+  })
+  async getChannelList(): Promise<SmsChannelListRespVO> {
+    return this.smsChannelConfigService.getChannelList();
   }
 }

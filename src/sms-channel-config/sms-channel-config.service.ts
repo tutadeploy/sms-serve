@@ -5,6 +5,7 @@ import { TenantChannelConfig } from './entities/tenant-channel-config.entity';
 import { UserChannelConfig } from './entities/user-channel-config.entity';
 import { ChannelSupportedCountry } from './entities/channel-supported-country.entity';
 import { BukaSmsChannelService } from './channels/buka-sms-channel.service';
+import { SmppSmsChannelService } from './channels/smpp-sms-channel.service';
 import {
   SmsChannel,
   CountryInfo,
@@ -18,6 +19,7 @@ import {
 import { BukaService } from '../sms-provider/buka/buka.service';
 import { SmppService } from '../sms-provider/smpp/smpp.service';
 import { SmsProvider } from '../sms-provider/entities/sms-provider.entity';
+import { SmsChannelVO, SmsChannelListRespVO } from './dto/sms-channel.vo';
 
 @Injectable()
 export class SmsChannelConfigService {
@@ -32,6 +34,7 @@ export class SmsChannelConfigService {
     @InjectRepository(ChannelSupportedCountry)
     private readonly channelSupportedCountryRepository: Repository<ChannelSupportedCountry>,
     private readonly bukaSmsChannelService: BukaSmsChannelService,
+    private readonly smppSmsChannelService: SmppSmsChannelService,
     private readonly userService: UserService,
     private readonly tenantService: TenantService,
     @Inject(forwardRef(() => BukaService))
@@ -43,6 +46,7 @@ export class SmsChannelConfigService {
   ) {
     // 注册各个渠道服务
     this.registerChannelService(this.bukaSmsChannelService);
+    this.registerChannelService(this.smppSmsChannelService);
   }
 
   /**
@@ -354,5 +358,39 @@ export class SmsChannelConfigService {
         BusinessErrorCode.CHANNEL_CONFIG_ERROR,
       );
     }
+  }
+
+  async getChannelList(): Promise<SmsChannelListRespVO> {
+    // 获取所有激活的渠道配置
+    const channels = await this.tenantChannelConfigRepository.find({
+      where: { isActive: true },
+      relations: ['tenant'],
+    });
+
+    // 获取所有激活的供应商
+    const providers = await this.smsProviderRepository.find({
+      where: { isActive: true },
+    });
+
+    // 构建渠道列表
+    const channelList: SmsChannelVO[] = channels.map((channel) => {
+      const provider = providers.find((p) => p.name === channel.channel);
+      const displayName = provider?.displayName || channel.channel;
+      return {
+        id: channel.id,
+        name: displayName,
+        code: channel.channel,
+        status: channel.isActive ? 1 : 0,
+        providerId: provider?.id || 0,
+        description: displayName,
+        createTime: channel.createTime?.toISOString(),
+        updateTime: channel.updateTime?.toISOString(),
+      };
+    });
+
+    return {
+      list: channelList,
+      total: channelList.length,
+    };
   }
 }

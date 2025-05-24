@@ -114,9 +114,18 @@ export class NotificationService {
     // 获取国家区号信息
     let dialCode = '';
     try {
+      this.logger.log(
+        `Provider name: ${provider.name}, Provider ID: ${providerId}`,
+      );
       // 根据提供商名称查询支持的国家列表
       const supportedCountries =
-        await this.smsChannelConfigService.getSupportedCountries('onbuka');
+        await this.smsChannelConfigService.getSupportedCountries(
+          provider.name.toLowerCase(),
+        );
+
+      this.logger.log(
+        `获取到支持的国家列表: ${JSON.stringify(supportedCountries)}`,
+      );
 
       // 查找指定国家代码的区号
       const countryInfo = supportedCountries.find(
@@ -124,6 +133,9 @@ export class NotificationService {
       );
 
       if (!countryInfo) {
+        this.logger.error(
+          `找不到国家代码 ${countryCode} 的支持信息，所有支持的国家: ${JSON.stringify(supportedCountries.map((c) => c.code))}`,
+        );
         throw new BusinessException(
           `The country code ${countryCode} is not supported by provider ${provider.name}`,
           BusinessErrorCode.INVALID_COUNTRY_CODE,
@@ -131,8 +143,8 @@ export class NotificationService {
       }
 
       dialCode = countryInfo.dialCode;
-      this.logger.debug(
-        `Found dial code ${dialCode} for country ${countryCode}`,
+      this.logger.log(
+        `Found dial code ${dialCode} for country ${countryCode} with provider ${provider.name}`,
       );
     } catch (error: unknown) {
       this.logger.error(
@@ -202,6 +214,10 @@ export class NotificationService {
         ? dialCode.substring(1) + recipient // 去掉 + 号
         : dialCode + recipient;
 
+      this.logger.log(
+        `Formatted number: ${formattedNumber} (original: ${recipient}, dialCode: ${dialCode})`,
+      );
+
       const smsMessage = this.smsMessageRepository.create({
         batchId: savedBatch.id,
         recipientNumber: formattedNumber,
@@ -219,6 +235,10 @@ export class NotificationService {
         recipient: formattedNumber,
         content: finalContent,
       };
+
+      this.logger.log(
+        `添加SMS发送任务到队列: messageId=${savedMessage.id}, provider=${providerId}, recipient=${formattedNumber}`,
+      );
 
       await this.smsQueue.add(jobData, {
         attempts: 3,
